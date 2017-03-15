@@ -22,7 +22,6 @@ const shortcuts = Dict{Int, Char}(
 type Player
     win::Any
     midi::Any
-    device::Any
     muted::Array{Bool,1}
     solo::Array{Bool,1}
     width::Int
@@ -35,7 +34,7 @@ end
 player = nothing
 
 function MidiPlayer(win, path, width, height)
-    Player(win, readsmf(path), midi.midiDevice(), falses(16), falses(16),
+    Player(win, readsmf(path), falses(16), falses(16),
            width, height, false, -1, false)
 end
 
@@ -387,10 +386,8 @@ function main(path)
 
     player = MidiPlayer(win, path, width, height)
 
-    player.device[:mididataset1](0x400130, 0x04)
-
     while !GLFW.WindowShouldClose(win)
-        delta = play(player.midi, player.device)
+        delta = play(player.midi)
         update(player)
         if delta > 0
             sleep(delta)

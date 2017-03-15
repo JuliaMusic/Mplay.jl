@@ -1,15 +1,16 @@
 Mplay.jl
 ========
 
-*Mplay* is a MIDI player written in pure *Julia*. This is a first
-release wich runs on *macOS X*. Future versions will be available for
-*Windows* and *Linux*, too. Apart from an *GLFW* wrapper (for the GUI
+*Mplay* is a MIDI player written in pure *Julia*. This is a beta
+release which runs on *macOS X* and *Windows*. Future versions will be
+available for *Linux*, too. Apart from a *GLFW* wrapper (for the GUI
 part), there are no dependencies on other packages. *Mplay* has been
-tested with *Julia* 0.5.1 (or 0.6) and *GLFW* 3.1.
+tested with *Julia* 0.5.1 (or 0.6) and *GLFW* 1.3.0.
 
 *macOS X* and *Windows* systems come with a builtin software synthesizer
-(*Apple* DLS SoftSynth, *Microsoft* GS Wavetable SW Synth). On those systems *Mplay* runs out of the box. However, best results can be achieved with the
-Roland Sound Canvas VA software synthesizer:
+(*Apple* DLS SoftSynth, *Microsoft* GS Wavetable SW Synth). On those
+systems *Mplay* runs out of the box. However, best results can be
+achieved with the Roland Sound Canvas VA software synthesizer:
 
 ![Mplay](http://josefheinen.de/pub/Mplay+SC.jpg)
 
@@ -39,6 +40,33 @@ Roland Sound Canvas VA software synthesizer:
 | > <                | transpose up/down       |
 | TAB                | select next channel     |
 | ESC                | quit Mplay              |
+
+**Installation:**
+
+This is preliminary version - the first "official" release will be available
+as a Julia package and can be installed using `Pkg.add("Mplay")`.
+
+*macOS X*
+
+```
+cc -shared -o libmidi.dylib libmidi.c \
+   -framework CoreMIDI -framework CoreAudio -framework AudioUnit \
+   -framework AudioToolbox -framework Cocoa
+export JULIA_LOAD_PATH=`pwd`
+```
+*Windows*
+
+```
+cl /c libmidi.c
+link /out:libmidi.dll libmidi.obj -dll winmm.lib
+set JULIA_LOAD_PATH=%cd%
+```
+
+**Usage:**
+
+```
+julia mplay.jl <midifile>
+```
 
 **Links:**
 

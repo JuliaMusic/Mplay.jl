@@ -1,9 +1,6 @@
 module smf
 
-ENV["PYTHONPATH"] = pwd()
-
-import PyCall
-@PyCall.pyimport darwinmidi as midi
+using midi
 
 export readsmf, play, fileinfo, songinfo, beatinfo, lyrics, chordinfo,
        setsong, channelinfo, setchannel
@@ -139,7 +136,6 @@ end
 
 type SMF
     path::AbstractString
-    device::Any
     format::Int
     tracks::Int
     mf::Array{UInt8}
@@ -173,7 +169,7 @@ end
 
 
 function StandardMidiFile()
-    smf = SMF("", nothing, 0, 0, zeros(UInt8,0), 1, empty!([[]]), 0, 0, 1,
+    smf = SMF("", 0, 0, zeros(UInt8,0), 1, empty!([[]]), 0, 0, 1,
               0, -1, 0, 0, 0, 384, 120, 0, "", "", "", [], div(60000000,120),
               4, 4, 24, 8, 8, 0, 2, Array{Any}(16))
     for ch in 1:16
@@ -481,7 +477,7 @@ function writemidi(smf, buf)
             smf.status = buf[1]
         end
     end
-    midi.midiDevice[:midievent](smf.device, buf[start:end])
+    midiwrite(buf[start:end])
     if debug
         s = sep = ""
         for byte in buf[start:end]
@@ -543,7 +539,7 @@ function setsong(smf; info...)
             for ch = 0:15
                 allnotesoff(smf, ch)
             end
-            midi.midiDevice[:close]
+            midiclose()
         elseif info[:action] == :pause
             if smf.pause == 0
                 smf.pause = time()
@@ -586,9 +582,7 @@ function setchannel(smf, channel; info...)
     elseif haskey(info, :sense)
         smf.channel[channel + 1][:sense] = info[:sense]
         block = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
-        midi.midiDevice[:mididataset1](smf.device,
-                                       0x40101a + block[channel + 1] << 8,
-                                       info[:sense])
+        mididataset1(0x40101a + block[channel + 1] << 8, info[:sense])
         sleep(0.04)
     elseif haskey(info, :delay)
         smf.channel[channel + 1][:delay] = info[:delay]
@@ -618,10 +612,11 @@ function timing(smf, at)
 end
 
 
-function play(smf, dev)
+function play(smf)
     if smf.start < 0
-        smf.device = dev
-        midi.midiDevice[:mididataset1](dev, 0x40007f, 0x00)
+        midiopen()
+        mididataset1(0x400130, 0x04)   # Hall 1
+        mididataset1(0x40007f, 0x00)   # GS Reset
         sleep(0.04)
         smf.start = time()
         writemidi(smf, [0xfc, 0xfa])

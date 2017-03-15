@@ -1,6 +1,6 @@
 module OpenGL
 
-const libGL = "/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/libGL.dylib"
+const libGL = Sys.KERNEL == :NT ? "C:/Windows/System32/opengl32.dll" : "/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/libGL.dylib"
 
 const GL_LINES = 0x0001
 export GL_LINES
