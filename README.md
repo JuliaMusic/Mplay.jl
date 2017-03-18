@@ -1,16 +1,21 @@
 Mplay.jl
 ========
 
-*Mplay* is a MIDI player written in pure *Julia*. This is a beta
-release which runs on *macOS X* and *Windows*. Future versions will be
-available for *Linux*, too. Apart from a *GLFW* wrapper (for the GUI
-part), there are no dependencies on other packages. *Mplay* has been
-tested with *Julia* 0.5.1 (or 0.6) and *GLFW* 1.3.0.
+*Mplay* is a full functional MIDI player written in pure *Julia*.
+It reads Standard MIDI Files (SMF) and sends them to MIDI devices
+(or software synthesizers) while giving visual feedback.
 
-*macOS X* and *Windows* systems come with a builtin software synthesizer
-(*Apple* DLS SoftSynth, *Microsoft* GS Wavetable SW Synth). On those
-systems *Mplay* runs out of the box. However, best results can be
-achieved with the Roland Sound Canvas VA software synthesizer:
+This is a beta release which runs on *macOS X* and *Windows*.
+Future versions will be available for *Linux*, too. Apart from a
+*GLFW* wrapper (for the GUI part), there are no dependencies on
+other packages. *Mplay* has been tested with *Julia* 0.5.1 (or
+0.6) and *GLFW* 1.3.0.
+
+*macOS X* and *Windows* systems come with a builtin software
+synthesizer (*Apple* DLS SoftSynth, *Microsoft* GS Wavetable SW
+Synth). On those systems *Mplay* runs out of the box. However,
+best results can be achieved with the Roland Sound Canvas VA
+software synthesizer:
 
 ![Mplay](http://josefheinen.de/pub/Mplay+SC.jpg)
 
@@ -67,6 +72,13 @@ set JULIA_LOAD_PATH=%cd%
 ```
 julia mplay.jl <midifile>
 ```
+
+**Internals**
+
+*Mplay* has no innovative features - the main focus is on
+simplicity and ease of use. It uses texture blitting to guarantee
+highest refresh rates. That's why it responds in real-time in the
+order of milliseconds, both to user interactions and MIDI events.
 
 **Links:**
 
