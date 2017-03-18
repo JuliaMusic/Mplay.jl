@@ -167,11 +167,13 @@ function update(player)
     chord, notes = chordinfo(player.midi)
     draw_text(15, 120, chord)
     paint_notes(notes)
-    ticker = "            Julia MIDI Player (c) 2017 by Josef Heinen "
+    text = "Julia MIDI Player  @ 2017 by Josef Heinen"
+    scrolling_text = convert(Array{UInt8}, " " ^ 12 * text * " ")
+    scrolling_text[32] = 0xa8  # @ => © (Latin-1)
     beat = beatinfo(player.midi)
-    shift = beat % length(strip(ticker)) + 1
-    if shift + 12 < length(ticker)
-        draw_text(630, 628, ticker[shift: shift + 12])
+    shift = beat % length(text) + 1
+    if shift + 12 < length(scrolling_text)
+        draw_text(630, 628, scrolling_text[shift: shift + 12])
     end
     for led in 0:3
         if beat % 4 == led
