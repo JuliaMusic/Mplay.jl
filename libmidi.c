@@ -10,6 +10,14 @@
 
 #include <stdio.h>
 
+typedef struct {
+  unsigned int timeStamp;
+  unsigned int data;
+} midievent_t;
+
+static midievent_t midiEvent[256];
+static int readIndex = 0, writeIndex = 0;
+
 #ifdef __APPLE__
 
 #include <CoreMIDI/MIDIServices.h>
@@ -23,8 +31,8 @@ extern UInt64 AudioGetCurrentHostTime();
 static AudioUnit synthUnit = 0;
 static AUGraph graph = 0;
 static MIDIClientRef client = 0;
-static MIDIPortRef output_port = 0;
-static MIDIEndpointRef endpoint;
+static MIDIPortRef input_port = 0, output_port = 0;
+static MIDIEndpointRef src, dest;
 
 #endif
 
@@ -45,6 +53,33 @@ void fatal(char *message)
   fprintf(stderr, "midi: %s\n", message);
   exit(0);
 }
+
+#ifdef __APPLE__
+
+static
+void readProc(const MIDIPacketList *newPackets, void *refCon,
+              void *connRefCon)
+{
+  MIDIPacket *packet = (MIDIPacket *) &newPackets->packet[0];
+  int packetIndex;
+
+  for (packetIndex = 0; packetIndex < newPackets->numPackets; packetIndex++)
+    {
+      if (packet->length <= 3)
+        {
+          unsigned char *data = packet->data;
+
+          midiEvent[writeIndex].timeStamp = packet->timeStamp;
+          midiEvent[writeIndex].data = (data[2]<<16) + (data[1]<<8) + data[0];
+
+          writeIndex = (writeIndex + 1) % 256;
+          if (writeIndex == readIndex)
+            fprintf(stderr, "midi: MIDI buffer overflow");
+        }
+      packet = MIDIPacketNext(packet);
+    }
+}
+#endif
 
 DLLEXPORT void midiopen(char *device)
 {
@@ -83,12 +118,26 @@ DLLEXPORT void midiopen(char *device)
     }
   else
     {
+      void *conRef = NULL;
+
       if (MIDIClientCreate(CFSTR("Mplay"), NULL, NULL, &client) != noErr)
         fatal("cannot create MIDI client");
+
       if (MIDIOutputPortCreate(client, CFSTR("Output port"), &output_port) != noErr)
         fatal("cannot create MIDI output port");
-      if ((endpoint = MIDIGetDestination(atoi(device))) == 0)
+      if ((dest = MIDIGetDestination(atoi(device))) == 0)
         fatal("cannot get MIDI destination");
+
+      if (MIDIInputPortCreate(client, CFSTR("Input port"), readProc, NULL, &input_port) != noErr)
+        fatal("cannot create MIDI input port");
+
+      if ((src = MIDIGetSource(atoi(device))) == 0)
+        printf("cannot get MIDI source\n");
+      else
+        {
+          if (MIDIPortConnectSource(input_port, src, conRef) != noErr)
+            fatal("cannot connect MIDI input source");
+        }
     }
 home:
   ;
@@ -122,7 +171,7 @@ DLLEXPORT void midiwrite(unsigned char *buffer, int nbytes)
       packet = MIDIPacketListInit(pktlist);
       packet = MIDIPacketListAdd(pktlist, sizeof(midi_buffer), packet,
                                  AudioGetCurrentHostTime(), nbytes, buffer);
-      if (MIDISend(output_port, endpoint, pktlist) != noErr)
+      if (MIDISend(output_port, dest, pktlist) != noErr)
         fatal("cannot send MIDI packet\n");
     }
 #endif
@@ -142,6 +191,19 @@ DLLEXPORT void midiwrite(unsigned char *buffer, int nbytes)
       midiOutPrepareHeader(midi_out, &midihdr, sizeof(midihdr));
       midiOutLongMsg(midi_out, &midihdr, sizeof(midihdr));
       midiOutUnprepareHeader(midi_out, &midihdr, sizeof(midihdr));
+    }
+#endif
+}
+
+DLLEXPORT void midiread(unsigned int *timeStamp, unsigned int *event)
+{
+  *timeStamp = 0;
+#ifdef __APPLE__
+  if (readIndex != writeIndex)
+    {
+      *timeStamp = midiEvent[readIndex].timeStamp;
+      *event = midiEvent[readIndex].data;
+      readIndex++;
     }
 #endif
 }
