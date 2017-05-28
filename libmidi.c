@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 
 typedef struct {
   unsigned int timeStamp;
@@ -25,6 +26,11 @@ extern UInt64 AudioGetCurrentHostTime();
 #include <CoreServices/CoreServices.h>
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
+
+#include <mach/mach_init.h>
+#include <mach/mach_error.h>
+#include <mach/mach_host.h>
+#include <mach/vm_map.h>
 
 #define DLLEXPORT
 
@@ -250,3 +256,75 @@ DLLEXPORT void midiclose()
   midiOutClose(midi_out);
 #endif
 }
+
+static
+float CalculateCPULoad(uint64_t idleTicks, uint64_t totalTicks)
+{
+  static uint64_t previousTotalTicks = 0;
+  static uint64_t previousIdleTicks = 0;
+  uint64_t totalTicksSinceLastTime = totalTicks - previousTotalTicks;
+  uint64_t idleTicksSinceLastTime = idleTicks - previousIdleTicks;
+  float ret;
+
+  if (totalTicksSinceLastTime > 0)
+    ret = 1.0f - (float) idleTicksSinceLastTime / totalTicksSinceLastTime;
+  else
+    ret = 1.0f;
+
+  previousTotalTicks = totalTicks;
+  previousIdleTicks = idleTicks;
+
+  return ret;
+}
+
+#ifdef __APPLE__
+
+float GetCPULoad()
+{
+  uint64_t totalTicks, idleTicks;
+  host_cpu_load_info_data_t cpuinfo;
+  mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+  int i;
+  float ret;
+
+  if (host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t) &cpuinfo,
+		      &count) == KERN_SUCCESS)
+    {
+      totalTicks = 0;
+      for (i = 0; i < CPU_STATE_MAX; i++)
+	totalTicks += cpuinfo.cpu_ticks[i];
+      idleTicks = cpuinfo.cpu_ticks[CPU_STATE_IDLE];
+
+      ret = CalculateCPULoad(idleTicks, totalTicks);
+    }
+  else
+    ret = -1.0f;
+
+  return ret;
+}
+
+#endif
+
+#ifdef _WIN32
+
+static
+uint64_t FileTimeToInt64(const FILETIME ft)
+{
+  return (((uint64_t) (ft.dwHighDateTime)) << 32) | ((uint64_t) ft.dwLowDateTime);
+}
+
+DLLEXPORT float midisystemload(void)
+{
+  FILETIME idleTime, kernelTime, userTime;
+  float ret;
+
+  if (GetSystemTimes(&idleTime, &kernelTime, &userTime))
+    ret = CalculateCPULoad(FileTimeToInt64(idleTime),
+			   FileTimeToInt64(kernelTime) + FileTimeToInt64(userTime));
+  else
+    ret = -1.0f;
+
+  return ret;
+}
+
+#endif
