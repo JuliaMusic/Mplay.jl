@@ -279,7 +279,7 @@ float CalculateCPULoad(uint64_t idleTicks, uint64_t totalTicks)
 
 #ifdef __APPLE__
 
-float GetCPULoad()
+float midisystemload()
 {
   uint64_t totalTicks, idleTicks;
   host_cpu_load_info_data_t cpuinfo;

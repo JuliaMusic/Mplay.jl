@@ -3,7 +3,7 @@ module smf
 using midi
 
 export readsmf, play, fileinfo, songinfo, beatinfo, lyrics, chordinfo,
-       setsong, channelinfo, setchannel
+       setsong, channelinfo, setchannel, cpuload
 export midi
 
 
@@ -609,6 +609,11 @@ function timing(smf, at)
         writemidi(smf, [0xf8])
         smf.midi_clock += div(smf.division, 24)
     end
+end
+
+
+function cpuload()
+    return midisystemload()
 end
 
 

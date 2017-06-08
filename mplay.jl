@@ -186,6 +186,8 @@ function update(player)
         copy_pixels(665, 251, 10, 10, 860, 604)
     end
     draw_rect(10, 2, round(Int, 710 * player.midi.at / player.midi.atend), 3)
+    draw_text(695, 177, "CPU")
+    draw_rect(703, 120, 5, round(Int, 50 * cpuload()))
 end
 
 function change_mute_state(player, channel)

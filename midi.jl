@@ -35,4 +35,12 @@ function midiclose()
 end
 export midiclose
 
+function midisystemload()
+    return ccall((:midisystemload, libmidi),
+                 Float32,
+                 (),
+                 )
+end
+export midisystemload
+
 end
