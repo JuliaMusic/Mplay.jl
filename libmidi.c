@@ -96,31 +96,31 @@ DLLEXPORT void midiopen(char *device)
       AudioComponentDescription cd;
       OSStatus result;
 
-      require_noerr (result = NewAUGraph (&graph), home);
+      __Require_noErr (result = NewAUGraph (&graph), home);
 
       cd.componentManufacturer = kAudioUnitManufacturer_Apple;
       cd.componentFlags = 0;
       cd.componentFlagsMask = 0;
       cd.componentType = kAudioUnitType_MusicDevice;
       cd.componentSubType = kAudioUnitSubType_DLSSynth;
-      require_noerr (result = AUGraphAddNode (graph, &cd, &synthNode), home);
+      __Require_noErr (result = AUGraphAddNode (graph, &cd, &synthNode), home);
 
       cd.componentType = kAudioUnitType_Effect;
       cd.componentSubType = kAudioUnitSubType_PeakLimiter;
-      require_noerr (result = AUGraphAddNode (graph, &cd, &limiterNode), home);
+      __Require_noErr (result = AUGraphAddNode (graph, &cd, &limiterNode), home);
 
       cd.componentType = kAudioUnitType_Output;
       cd.componentSubType = kAudioUnitSubType_DefaultOutput;
-      require_noerr (result = AUGraphAddNode (graph, &cd, &outNode), home);
+      __Require_noErr (result = AUGraphAddNode (graph, &cd, &outNode), home);
 
-      require_noerr (result = AUGraphOpen (graph), home);
-      require_noerr (result = AUGraphConnectNodeInput (graph, synthNode, 0, limiterNode, 0), home);
-      require_noerr (result = AUGraphConnectNodeInput (graph, limiterNode, 0, outNode, 0), home);
+      __Require_noErr (result = AUGraphOpen (graph), home);
+      __Require_noErr (result = AUGraphConnectNodeInput (graph, synthNode, 0, limiterNode, 0), home);
+      __Require_noErr (result = AUGraphConnectNodeInput (graph, limiterNode, 0, outNode, 0), home);
 
-      require_noerr (result = AUGraphNodeInfo(graph, synthNode, 0, &synthUnit), home);
+      __Require_noErr (result = AUGraphNodeInfo(graph, synthNode, 0, &synthUnit), home);
 
-      require_noerr (result = AUGraphInitialize (graph), home);
-      require_noerr (result = AUGraphStart (graph), home);
+      __Require_noErr (result = AUGraphInitialize (graph), home);
+      __Require_noErr (result = AUGraphStart (graph), home);
     }
   else
     {

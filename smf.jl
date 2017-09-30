@@ -134,7 +134,7 @@ function printable(chars)
 end
 
 
-type SMF
+mutable struct SMF
     path::AbstractString
     format::Int
     tracks::Int
@@ -236,6 +236,7 @@ end
 
 function readevents(smf)
     state = 0
+    chan = 0
     at = 0
     while true
         delta = extractnumber(smf)
@@ -444,7 +445,7 @@ function chordinfo(smf)
             end
         end
     end
-    if countnz(digits(keys_pressed, 2)) in [3, 4, 5]
+    if count(!iszero, digits(keys_pressed, 2)) in [3, 4, 5]
         for key = 0:11
             if keys_pressed in chords.keys
                 smf.chord = rpad(notes[key + 1] * chords[keys_pressed] * "    ", 10)
