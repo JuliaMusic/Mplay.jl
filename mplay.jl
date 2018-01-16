@@ -197,7 +197,7 @@ end
 function change_solo_state(player, channel)
     player.solo[channel + 1] = !player.solo[channel + 1]
     if player.solo[channel + 1]
-        setchannel(player.midi, channel, solo=player.solo[channel])
+        setchannel(player.midi, channel, solo=player.solo[channel + 1])
         for ch in 0:15
             player.muted[ch + 1] = ch != channel ? true : false
             player.solo[ch + 1] = ch == channel ? true : false
