@@ -2,9 +2,13 @@ module midi
 
 const libmidi = Sys.KERNEL == :NT ? "libmidi.dll" : "libmidi.dylib"
 
+@static if VERSION < v"0.7.0-DEV.3137"
+  const Nothing = Void
+end
+
 function midiopen(device="")
     ccall((:midiopen, libmidi),
-          Void,
+          Nothing,
           (Ptr{UInt8}, ),
           device)
 end
@@ -13,7 +17,7 @@ export midiopen
 function midiwrite(buffer)
     nbytes = length(buffer)
     ccall((:midiwrite, libmidi),
-          Void,
+          Nothing,
           (Ptr{UInt8}, Int32),
           convert(Vector{UInt8}, buffer), nbytes)
 end
@@ -21,7 +25,7 @@ export midiwrite
 
 function mididataset1(address, data)
     ccall((:mididataset1, libmidi),
-          Void,
+          Nothing,
           (Int32, Int32),
           address, data)
 end
@@ -29,7 +33,7 @@ export mididataset1
 
 function midiclose()
     ccall((:midiclose, libmidi),
-          Void,
+          Nothing,
           (),
           )
 end

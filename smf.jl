@@ -169,9 +169,16 @@ end
 
 
 function StandardMidiFile()
-    smf = SMF("", 0, 0, zeros(UInt8,0), 1, empty!([[]]), 0, 0, 1,
+    if VERSION > v"0.7.0-"
+        ev = Array{Array{Any}}(uninitialized,0)
+        channel = Array{Any}(uninitialized,16)
+    else
+        ev = Array{Array{Any}}(0)
+        channel = Array{Any}(16)
+    end
+    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, 0, 0, 1,
               0, -1, 0, 0, 0, 384, 120, 0, "", "", "", [], div(60000000,120),
-              4, 4, 24, 8, 8, 0, 2, Array{Any}(16))
+              4, 4, 24, 8, 8, 0, 2, channel)
     for ch in 1:16
         smf.channel[ch] = Dict(:used => false,
                                :muted => false,
