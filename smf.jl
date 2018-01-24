@@ -452,7 +452,12 @@ function chordinfo(smf)
             end
         end
     end
-    if count(!iszero, digits(keys_pressed, 2)) in [3, 4, 5]
+    if VERSION > v"0.7.0-"
+        bits = digits(keys_pressed, base=2)
+    else
+        bits = digits(keys_pressed, 2)
+    end
+    if count(!iszero, bits) in [3, 4, 5]
         for key = 0:11
             if keys_pressed in chords.keys
                 smf.chord = rpad(notes[key + 1] * chords[keys_pressed] * "    ", 10)

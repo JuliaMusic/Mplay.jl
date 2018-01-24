@@ -169,8 +169,9 @@ function update(player)
     paint_notes(notes)
     text = "Julia MIDI Player  @ 2017 by Josef Heinen"
     scrolling_text = " " ^ 12 * text * " "
-    #scrolling_text = Vector{UInt8}(" " ^ 12 * text * " ")
-    #scrolling_text[32] = 0xa8  # @ => © (Latin-1)
+    scrolling_text = unsafe_wrap(Array{UInt8, 1}, pointer(scrolling_text),
+                                 length(scrolling_text))
+    scrolling_text[32] = 0xa8  # @ => © (Latin-1)
     beat = beatinfo(player.midi)
     shift = beat % length(text) + 1
     if shift + 12 < length(scrolling_text)
