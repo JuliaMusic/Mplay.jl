@@ -11,7 +11,7 @@ const SOLO_ON = Dict{Char, Any}(
     'B' => ["Bass"], 'G' => ["Guitar"],
     'K' => ["Piano", "Organ", "Strings", "Ensemble"])
 
-const shortcuts = Dict{Int, Char}(
+const shortcuts = Dict(
     GLFW.KEY_ESCAPE => '\e',
     GLFW.KEY_TAB => '\t',
     GLFW.KEY_UP => '+' ,
@@ -167,7 +167,7 @@ function update(player)
     chord, notes = chordinfo(player.midi)
     draw_text(15, 120, chord)
     paint_notes(notes)
-    text = "Julia MIDI Player  @ 2017 by Josef Heinen"
+    text = "Julia MIDI Player  @ 2018 by Josef Heinen"
     scrolling_text = " " ^ 12 * text * " "
     scrolling_text = unsafe_wrap(Array{UInt8, 1}, pointer(scrolling_text),
                                  length(scrolling_text))

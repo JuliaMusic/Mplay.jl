@@ -26,6 +26,7 @@ const MOUSE_BUTTON_1 = 0
 export MOUSE_BUTTON_1
 
 const Window = Ptr{Cvoid}
+const _callback_refs = Dict{Ptr, Any}()
 
 function Init()
     ccall((:glfwInit, libGLFW),
@@ -100,8 +101,9 @@ function GetCursorPos(window::Window)
 end
 export GetCursorPos
 
-function SetKeyCallback(window::Window, callback)
+function SetKeyCallback(window::Window, callback::Function)
     callback_c = cfunction(callback, Cvoid, Tuple{Ptr{Cvoid}, Cint, Cint, Cint, Cint})
+    _callback_refs[callback_c] = callback
     ccall((:glfwSetKeyCallback, libGLFW),
           Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}),
@@ -109,8 +111,9 @@ function SetKeyCallback(window::Window, callback)
 end
 export SetKeyCallback
 
-function SetCharCallback(window::Window, callback)
+function SetCharCallback(window::Window, callback::Function)
     callback_c = cfunction(callback, Cvoid, Tuple{Ptr{Cvoid}, Cuint})
+    _callback_refs[callback_c] = callback
     ccall((:glfwSetCharCallback, libGLFW),
           Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}),
@@ -118,8 +121,9 @@ function SetCharCallback(window::Window, callback)
 end
 export SetCharCallback
 
-function SetMouseButtonCallback(window::Window, callback)
+function SetMouseButtonCallback(window::Window, callback::Function)
     callback_c = cfunction(callback, Cvoid, Tuple{Ptr{Cvoid}, Cint, Cint, Cint})
+    _callback_refs[callback_c] = callback
     ccall((:glfwSetMouseButtonCallback, libGLFW),
           Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}),
@@ -127,8 +131,9 @@ function SetMouseButtonCallback(window::Window, callback)
 end
 export SetMouseButtonCallback
 
-function SetCursorPosCallback(window::Window, callback)
+function SetCursorPosCallback(window::Window, callback::Function)
     callback_c = cfunction(callback, Cvoid, Tuple{Ptr{Cvoid}, Cdouble, Cdouble})
+    _callback_refs[callback_c] = callback
     ccall((:glfwSetCursorPosCallback, libGLFW),
           Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}),
