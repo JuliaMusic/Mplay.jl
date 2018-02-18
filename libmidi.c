@@ -269,7 +269,7 @@ float CalculateCPULoad(uint64_t idleTicks, uint64_t totalTicks)
   if (totalTicksSinceLastTime > 0)
     ret = 1.0f - (float) idleTicksSinceLastTime / totalTicksSinceLastTime;
   else
-    ret = 1.0f;
+    ret = 0.0f;
 
   previousTotalTicks = totalTicks;
   previousIdleTicks = idleTicks;
