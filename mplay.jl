@@ -231,7 +231,11 @@ function char_callback(_, key)
         setsong(player.midi, action=:pause)
         player.pause = !player.pause
     elseif contains("1234567890!@#\$%^", string(key))
-        channel = search("1234567890!@#\$%^", key) - 1
+        if VERSION > v"0.7.0-"
+          channel = findfirst(equalto(key), "1234567890!@#\$%^") - 1
+        else
+          channel = search("1234567890!@#\$%^", key) - 1
+        end
         player.muted[channel + 1] = !player.muted[channel + 1]
         change_mute_state(player, channel)
     elseif key == 'a'
