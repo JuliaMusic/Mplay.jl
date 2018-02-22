@@ -213,6 +213,7 @@ function change_solo_state(player, channel)
 end
 
 function char_callback(_, key)
+    key = Char(key)
     if key == '\e'
         setsong(player.midi, action=:exit)
         exit(0)
