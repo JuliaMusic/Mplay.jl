@@ -6,6 +6,11 @@ export readsmf, play, fileinfo, songinfo, beatinfo, lyrics, chordinfo,
        setsong, channelinfo, setchannel, cpuload
 export midi
 
+@static if VERSION > v"0.7.0-"
+    function dec(n::Int, pad::Int=0)
+        string(n, pad=pad)
+    end
+end
 
 const debug = false
 const gm1 = true
