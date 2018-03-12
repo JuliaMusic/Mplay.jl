@@ -175,8 +175,8 @@ end
 
 function StandardMidiFile()
     if VERSION > v"0.7.0-"
-        ev = Array{Array{Any}}(uninitialized,0)
-        channel = Array{Any}(uninitialized,16)
+        ev = Array{Array{Any}}(undef,0)
+        channel = Array{Any}(undef,16)
     else
         ev = Array{Array{Any}}(0)
         channel = Array{Any}(16)

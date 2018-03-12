@@ -26,7 +26,7 @@ const MOUSE_BUTTON_1 = 0
 export MOUSE_BUTTON_1
 
 const Window = Ptr{Cvoid}
-const _callback_refs = Vector{Function}(uninitialized, 4)
+const _callback_refs = Vector{Function}(undef, 4)
 
 function Init()
     ccall((:glfwInit, libGLFW),
