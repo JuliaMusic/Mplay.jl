@@ -45,7 +45,11 @@ function read_image(path)
     readline(f)  # number of colors
     img = read(f)
     close(f)
-    img = flipdim(reshape(img, width*3, height), 2)
+    @static if VERSION > v"0.7.0-"
+        img = reverse(reshape(img, width*3, height), dims=2)
+    else
+        img = flipdim(reshape(img, width*3, height), 2)
+    end
     width, height, img
 end
 
@@ -232,7 +236,7 @@ function char_callback(_, key)
         setsong(player.midi, action=:pause)
         player.pause = !player.pause
     elseif contains("1234567890!@#\$%^", string(key))
-        if VERSION > v"0.7.0-"
+        @static if VERSION > v"0.7.0-"
           channel = findfirst(equalto(key), "1234567890!@#\$%^") - 1
         else
           channel = search("1234567890!@#\$%^", key) - 1
