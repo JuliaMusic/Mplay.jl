@@ -235,9 +235,9 @@ function char_callback(_, key)
     elseif key == ' '
         setsong(player.midi, action=:pause)
         player.pause = !player.pause
-    elseif contains("1234567890!@#\$%^", string(key))
+    elseif key in "1234567890!@#\$%^"
         @static if VERSION > v"0.7.0-"
-          channel = findfirst(equalto(key), "1234567890!@#\$%^") - 1
+          channel = findfirst(isequal(key), "1234567890!@#\$%^") - 1
         else
           channel = search("1234567890!@#\$%^", key) - 1
         end
