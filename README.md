@@ -17,7 +17,7 @@ Synth). On those systems *Mplay* runs out of the box. However,
 best results can be achieved with the Roland Sound Canvas VA
 software synthesizer:
 
-![Mplay](http://josefheinen.de/pub/Mplay+SC.jpg)
+![Mplay](Mplay+SC.png)
 
 **Hightlights:**
 
