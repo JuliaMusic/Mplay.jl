@@ -79,7 +79,3 @@ julia mplay.jl <midifile>
 simplicity and ease of use. It uses texture blitting to guarantee
 highest refresh rates. That's why it responds in real-time in the
 order of milliseconds, both to user interactions and MIDI events.
-
-**Links:**
-
-[*Mplay* website](http://josefheinen.de/mplay.html "Mplay website")
