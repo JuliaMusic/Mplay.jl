@@ -382,7 +382,7 @@ function mplay(path)
     GLFW.MakeContextCurrent(win)
     GLFW.ShowWindow(win)
 
-    width, height, img = read_image("mixer.ppm")
+    width, height, img = read_image(joinpath(@__DIR__, "mixer.ppm"))
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
     texture = glGenTextures(1)
