@@ -1,7 +1,14 @@
-import GLFW
+module Mplay
 
-using OpenGL
-using smf
+include("GLFW.jl")
+include("OpenGL.jl")
+include("midi.jl")
+include("smf.jl")
+
+using .GLFW
+
+using .OpenGL
+using .smf
 
 const MUTE_ON_OFF = Dict{Char, Any}(
     'b' => ["Bass"], 'g' => ["Guitar"],
@@ -365,7 +372,7 @@ function change_instrument(player, value)
     return 0
 end
 
-function main(path)
+function mplay(path)
     global player
 
     GLFW.Init()
@@ -416,6 +423,6 @@ function main(path)
     GLFW.Terminate()
 end
 
-if length(ARGS) > 0
-    main(ARGS[1])
+export mplay
+
 end
