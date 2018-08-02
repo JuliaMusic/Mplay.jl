@@ -344,7 +344,7 @@ function cursor_pos_callback(_, x, y)
     if player.button
         if 34 <= y < 34 + 5 * 58
             y -= 34
-            value = 63.5 + atan2(x % 38 - 19, 17 - y % 58) / pi * 127 / 1.5
+            value = 63.5 + atan(x % 38 - 19, 17 - y % 58) / pi * 127 / 1.5
             value = trunc(Int, min(max(value, 0), 127))
             knob = div(y, 58)
             if knob == 0
