@@ -1,6 +1,6 @@
 module smf
 
-using midi
+using ..midi
 
 export readsmf, play, fileinfo, songinfo, beatinfo, lyrics, chordinfo,
        setsong, channelinfo, setchannel, cpuload

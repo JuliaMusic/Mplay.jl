@@ -1,6 +1,6 @@
 module GLFW
 
-const libGLFW = Sys.KERNEL == :NT ? "lib/libglfw.dll" : "lib/libglfw.dylib"
+const libGLFW = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libglfw.dll" : "lib/libglfw.dylib")
 
 @static if VERSION < v"0.7.0-DEV.3137"
   const Cvoid = Void

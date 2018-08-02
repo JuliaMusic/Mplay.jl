@@ -1,7 +1,14 @@
-import GLFW
+module Mplay
 
-using OpenGL
-using smf
+include("GLFW.jl")
+include("OpenGL.jl")
+include("midi.jl")
+include("smf.jl")
+
+using .GLFW
+
+using .OpenGL
+using .smf
 
 const MUTE_ON_OFF = Dict{Char, Any}(
     'b' => ["Bass"], 'g' => ["Guitar"],
@@ -337,7 +344,7 @@ function cursor_pos_callback(_, x, y)
     if player.button
         if 34 <= y < 34 + 5 * 58
             y -= 34
-            value = 63.5 + atan2(x % 38 - 19, 17 - y % 58) / pi * 127 / 1.5
+            value = 63.5 + atan(x % 38 - 19, 17 - y % 58) / pi * 127 / 1.5
             value = trunc(Int, min(max(value, 0), 127))
             knob = div(y, 58)
             if knob == 0
@@ -365,7 +372,7 @@ function change_instrument(player, value)
     return 0
 end
 
-function main(path)
+function mplay(path)
     global player
 
     GLFW.Init()
@@ -375,7 +382,7 @@ function main(path)
     GLFW.MakeContextCurrent(win)
     GLFW.ShowWindow(win)
 
-    width, height, img = read_image("mixer.ppm")
+    width, height, img = read_image(joinpath(@__DIR__, "mixer.ppm"))
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
     texture = glGenTextures(1)
@@ -416,6 +423,6 @@ function main(path)
     GLFW.Terminate()
 end
 
-if length(ARGS) > 0
-    main(ARGS[1])
+export mplay
+
 end
