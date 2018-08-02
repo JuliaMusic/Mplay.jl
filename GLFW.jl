@@ -1,6 +1,6 @@
 module GLFW
 
-const libGLFW = "/usr/local/lib/libglfw.dylib"
+const libGLFW = Sys.KERNEL == :NT ? "lib/libglfw.dll" : "lib/libglfw.dylib"
 
 @static if VERSION < v"0.7.0-DEV.3137"
   const Cvoid = Void
@@ -26,7 +26,18 @@ const MOUSE_BUTTON_1 = 0
 export MOUSE_BUTTON_1
 
 const Window = Ptr{Cvoid}
-const _callback_refs = Vector{Function}(undef, 4)
+
+@static if VERSION > v"0.7.0-"
+    const _callback_refs = Vector{Function}(undef, 4)
+else
+    const _callback_refs = Vector{Function}(4)
+end
+
+@static if !isdefined(Base, Symbol("@cfunction"))
+    macro cfunction(f, rt, tup)
+        :(Base.cfunction($(esc(f)), $(esc(rt)), Tuple{$(esc(tup))...}))
+    end
+end
 
 function Init()
     ccall((:glfwInit, libGLFW),
