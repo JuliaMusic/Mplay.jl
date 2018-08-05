@@ -6,10 +6,8 @@ It reads Standard MIDI Files (SMF) and sends them to MIDI devices
 (or software synthesizers) while giving visual feedback.
 
 This is a beta release which runs on *macOS X* and *Windows*.
-Future versions will be available for *Linux*, too. Apart from a
-*GLFW* wrapper (for the GUI part), there are no dependencies on
-other packages. *Mplay* has been tested with *Julia* 0.5.2 (or
-0.7.0-DEV) and *GLFW* 1.3.0.
+Future versions will be available for *Linux*, too. *Mplay* has been
+tested with *Julia* 0.6.4 (or 1.0.0-DEV) and *GLFW* 1.5.0.
 
 *macOS X* and *Windows* systems come with a builtin software
 synthesizer (*Apple* DLS SoftSynth, *Microsoft* GS Wavetable SW
@@ -48,29 +46,26 @@ software synthesizer:
 
 **Installation:**
 
-This is preliminary version - the first "official" release will be available
-as a Julia package and can be installed using `Pkg.add("Mplay")`.
+```
+Pkg.clone("https://github.com/JuliaMusic/Mplay.jl")
+```
 
-*macOS X*
-
-```
-cc -shared -o libmidi.dylib libmidi.c \
-   -framework CoreMIDI -framework CoreAudio -framework AudioUnit \
-   -framework AudioToolbox -framework Cocoa
-export JULIA_LOAD_PATH=`pwd`
-```
-*Windows*
-
-```
-cl /c libmidi.c
-link /out:libmidi.dll libmidi.obj -dll winmm.lib
-set JULIA_LOAD_PATH=%cd%
-```
+On macOS X and Windows systems *Mplay* comes as a self-contained
+package with its own wrappers for *GLFW* and *OpenGL* as well as
+the required run-time libraries for the GUI and Midi subsystems.
 
 **Usage:**
 
 ```
-julia mplay.jl <midifile>
+using Mplay
+mplay(<path to midi file>)
+```
+
+You can also create your own wrapper script to use *Mplay* from the
+command line (`mplay.jl` is contained in the package), e.g.:
+
+```
+julia main.jl <path to midi file>
 ```
 
 **Internals**
@@ -79,3 +74,20 @@ julia mplay.jl <midifile>
 simplicity and ease of use. It uses texture blitting to guarantee
 highest refresh rates. That's why it responds in real-time in the
 order of milliseconds, both to user interactions and MIDI events.
+
+If, for any reason, the contained run-time doesn't work, you can
+build your own binaries:
+
+*macOS X*
+
+```
+cc -shared -o libmidi.dylib libmidi.c \
+   -framework CoreMIDI -framework CoreAudio -framework AudioUnit \
+   -framework AudioToolbox -framework Cocoa
+```
+*Windows*
+
+```
+cl /c libmidi.c
+link /out:libmidi.dll libmidi.obj -dll winmm.lib
+```
