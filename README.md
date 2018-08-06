@@ -5,7 +5,7 @@ Mplay.jl
 It reads Standard MIDI Files (SMF) and sends them to MIDI devices
 (or software synthesizers) while giving visual feedback.
 
-This is a beta release which runs on *macOS X* and *Windows*.
+This is a pre-release which runs on *macOS X* and *Windows*.
 Future versions will be available for *Linux*, too. *Mplay* has been
 tested with *Julia* 0.6.4 (or 1.0.0-DEV) and *GLFW* 1.5.0.
 
@@ -62,7 +62,7 @@ mplay(<path to midi file>)
 ```
 
 You can also create your own wrapper script to use *Mplay* from the
-command line (`mplay.jl` is contained in the package), e.g.:
+command line (`main.jl` is contained in the package), e.g.:
 
 ```
 julia main.jl <path to midi file>
@@ -75,7 +75,7 @@ simplicity and ease of use. It uses texture blitting to guarantee
 highest refresh rates. That's why it responds in real-time in the
 order of milliseconds, both to user interactions and MIDI events.
 
-If, for any reason, the contained run-time doesn't work, you can
+If, for any reason, the contained MIDI run-time doesn't work, you can
 build your own binaries:
 
 *macOS X*
