@@ -7,7 +7,7 @@ It reads Standard MIDI Files (SMF) and sends them to MIDI devices
 
 This is a pre-release which runs on *macOS X* and *Windows*.
 Future versions will be available for *Linux*, too. *Mplay* has been
-tested with *Julia* 0.6.4 (or 1.0.0-DEV) and *GLFW* 1.5.0.
+tested with *Julia* 0.6.4 (and 1.0.0) and *GLFW* 1.5.0.
 
 *macOS X* and *Windows* systems come with a builtin software
 synthesizer (*Apple* DLS SoftSynth, *Microsoft* GS Wavetable SW
