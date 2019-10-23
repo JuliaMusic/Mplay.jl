@@ -52,11 +52,7 @@ function read_image(path)
     readline(f)  # number of colors
     img = read(f)
     close(f)
-    @static if VERSION > v"0.7.0-"
-        img = reverse(reshape(img, width*3, height), dims=2)
-    else
-        img = flipdim(reshape(img, width*3, height), 2)
-    end
+    img = reverse(reshape(img, width*3, height), dims=2)
     width, height, img
 end
 
@@ -243,11 +239,7 @@ function char_callback(_, key)
         setsong(player.midi, action=:pause)
         player.pause = !player.pause
     elseif key in "1234567890!@#\$%^"
-        @static if VERSION > v"0.7.0-"
-          channel = findfirst(isequal(key), "1234567890!@#\$%^") - 1
-        else
-          channel = search("1234567890!@#\$%^", key) - 1
-        end
+        channel = findfirst(isequal(key), "1234567890!@#\$%^") - 1
         player.muted[channel + 1] = !player.muted[channel + 1]
         change_mute_state(player, channel)
     elseif key == 'a'

@@ -2,10 +2,6 @@ module OpenGL
 
 const libGL = Sys.KERNEL == :NT ? "C:/Windows/System32/opengl32.dll" : "/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/libGL.dylib"
 
-@static if VERSION < v"0.7.0-DEV.3137"
-  const Cvoid = Void
-end
-
 const GL_LINES = 0x0001
 export GL_LINES
 const GL_QUADS = 0x0007

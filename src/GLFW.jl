@@ -2,10 +2,6 @@ module GLFW
 
 const libGLFW = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libglfw.dll" : "lib/libglfw.dylib")
 
-@static if VERSION < v"0.7.0-DEV.3137"
-  const Cvoid = Void
-end
-
 const PRESS = 1
 export PRESS
 
@@ -27,11 +23,7 @@ export MOUSE_BUTTON_1
 
 const Window = Ptr{Cvoid}
 
-@static if VERSION > v"0.7.0-"
-    const _callback_refs = Vector{Function}(undef, 4)
-else
-    const _callback_refs = Vector{Function}(4)
-end
+const _callback_refs = Vector{Function}(undef, 4)
 
 @static if !isdefined(Base, Symbol("@cfunction"))
     macro cfunction(f, rt, tup)

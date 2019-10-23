@@ -6,13 +6,18 @@ export readsmf, play, fileinfo, songinfo, beatinfo, lyrics, chordinfo,
        setsong, channelinfo, setchannel, cpuload
 export midi
 
-@static if VERSION > v"0.7.0-"
-    function dec(n::Int, pad::Int=0)
-        string(n, pad=pad)
-    end
+oct(n) = string(n, base=8)
+
+function dec(n::Int, pad::Int=0)
+    string(n, pad=pad)
 end
 
-const debug = false
+function hex(n, pad::Int=0)
+    string(n, base=16, pad=pad)
+end
+
+debug = false
+
 const gm1 = true
 
 const instruments = (
@@ -121,7 +126,6 @@ const meta = (
     "Sequence Number", "Text", "Copyright", "Sequence Name",
     "Instrument", "Lyric", "Marker", "Cue Point")
 
-
 function printable(chars)
     result = ""
     for b in chars
@@ -174,13 +178,8 @@ end
 
 
 function StandardMidiFile()
-    if VERSION > v"0.7.0-"
-        ev = Array{Array{Any}}(undef,0)
-        channel = Array{Any}(undef,16)
-    else
-        ev = Array{Array{Any}}(0)
-        channel = Array{Any}(16)
-    end
+    ev = Array{Array{Any}}(undef,0)
+    channel = Array{Any}(undef,16)
     smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, 0, 0, 1,
               0, -1, 0, 0, 0, 384, 120, 0, "", "", "", [], div(60000000,120),
               4, 4, 24, 8, 8, 0, 2, channel)
@@ -247,6 +246,7 @@ function extractnumber(smf)
 end
 
 function readevents(smf)
+    global debug
     state = 0
     chan = 0
     at = 0
@@ -365,6 +365,8 @@ end
 
 
 function readsmf(path)
+    global debug
+    debug = haskey(ENV, "DEBUG")
     smf = StandardMidiFile()
     smf.path = basename(path)
     smf.mf = read(path)
@@ -457,11 +459,7 @@ function chordinfo(smf)
             end
         end
     end
-    if VERSION > v"0.7.0-"
-        bits = digits(keys_pressed, base=2)
-    else
-        bits = digits(keys_pressed, 2)
-    end
+    bits = digits(keys_pressed, base=2)
     if count(!iszero, bits) in [3, 4, 5]
         for key = 0:11
             if keys_pressed in chords.keys
@@ -487,6 +485,7 @@ end
 
 
 function writemidi(smf, buf)
+    global debug
     start = 1
     if !gm1 && buf[1] < 0xf0
         if buf[1] == smf.status
@@ -502,7 +501,7 @@ function writemidi(smf, buf)
             s *= sep * "0x" * hex(byte, 2)
             sep = " "
         end
-        println(round(time() - smf.start, 4), " ", s)
+        println(round(time() - smf.start, digits=4), " ", s)
     end
 end
 

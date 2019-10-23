@@ -2,10 +2,6 @@ module midi
 
 const libmidi = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libmidi.dll" : "lib/libmidi.dylib")
 
-@static if VERSION < v"0.7.0-DEV.3137"
-  const Nothing = Void
-end
-
 function midiopen(device="")
     ccall((:midiopen, libmidi),
           Nothing,
