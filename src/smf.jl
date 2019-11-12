@@ -634,9 +634,9 @@ function cpuload()
 end
 
 
-function play(smf)
+function play(smf, device="")
     if smf.start < 0
-        midiopen()
+        midiopen(device)
         mididataset1(0x400130, 0x04)   # Hall 1
         mididataset1(0x40007f, 0x00)   # GS Reset
         sleep(0.04)

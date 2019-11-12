@@ -364,7 +364,7 @@ function change_instrument(player, value)
     return 0
 end
 
-function mplay(path)
+function mplay(path, device="")
     global player
 
     GLFW.Init()
@@ -401,7 +401,7 @@ function mplay(path)
     player = MidiPlayer(win, path, width, height)
 
     while GLFW.WindowShouldClose(win) == 0
-        delta = play(player.midi)
+        delta = play(player.midi, device)
         update(player)
         if delta > 0
             sleep(delta)
