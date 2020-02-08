@@ -1,0 +1,7 @@
+name = "Mplay"
+uuid = "741d1e83-496a-487a-9490-6968f7c0e369"
+author = ["Josef Heinen (@jheinen)"]
+version = "1.0.0"
+
+[compat]
+julia = "1"
