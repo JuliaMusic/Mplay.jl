@@ -280,9 +280,23 @@ function char_callback(_, key)
     elseif key == '+'
         setsong(player.midi, bpm=+1)
     elseif key == ','
-        setsong(player.midi, bar=-1)
+        if player.selection >= 0
+            info = channelinfo(player.midi, player.selection)
+            value = info[:instrument] - 1
+            if value < 0 value = 127 end
+            setchannel(player.midi, player.selection, instrument=value)
+        else
+            setsong(player.midi, bar=-1)
+        end
     elseif key == '.'
-        setsong(player.midi, bar=+1)
+        if player.selection >= 0
+            info = channelinfo(player.midi, player.selection)
+            value = info[:instrument] + 1
+            if value > 127 value = 0 end
+            setchannel(player.midi, player.selection, instrument=value)
+        else
+            setsong(player.midi, bar=+1)
+        end
     end
 end
 
@@ -306,6 +320,11 @@ function mouse_button_callback(win, button, action, mods)
             player.pause = !player.pause
         elseif 420 < y < 430
             setsong(player.midi, bar=+1)
+        end
+        return
+    elseif 620 < x < 720
+        if 76 < y < 300
+            player.selection = div(y - 76, 14)
         end
         return
     elseif x >= 608
