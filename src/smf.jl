@@ -20,39 +20,12 @@ debug = false
 
 const gm1 = true
 
-const instruments = (
-    "Piano 1", "Piano 2", "Piano 3", "Honky-tonk",
-    "E.Piano 1", "E.Piano 2", "Harpsichord", "Clav.",
-    "Celesta", "Glockenspl", "Music Box", "Vibraphone",
-    "Marimba", "Xylophone", "Tubularbell", "Santur",
-    "Organ 1", "Organ 2", "Organ 3", "Church Org1",
-    "Reed Organ", "Accordion F", "Harmonica", "Bandoneon",
-    "Nylon Gt.", "Steel Gt.", "Jazz Gt.", "Clean Gt.",
-    "Muted Gt.", "OverdriveGt", "Dist.Gt.", "Gt.Harmonix",
-    "Acoustic Bs", "Fingered Bs", "Picked Bass", "Fretless Bs",
-    "Slap Bass 1", "Slap Bass 2", "Syn.Bass 1", "Syn.Bass 2",
-    "Violin", "Viola", "Cello", "Contrabass",
-    "Tremolo Str", "Pizzicato", "Harp", "Timpani",
-    "Strings", "SlowStrings", "SynStrings1", "SynStrings2",
-    "Choir Aahs", "Voice Oohs", "SynVox", "Orchest.Hit",
-    "Trumpet", "Trombone", "Tuba", "MuteTrumpet",
-    "French Horn", "Brass 1", "Syn.Brass 1", "Syn.Brass 2",
-    "Soprano Sax", "Alto Sax", "Tenor Sax", "BaritoneSax",
-    "Oboe", "EnglishHorn", "Bassoon", "Clarinet",
-    "Piccolo", "Flute", "Recorder", "Pan Flute",
-    "Bottle Blow", "Shakuhachi", "Whistle", "Ocarina",
-    "Square Wave", "Saw Wave", "SynCalliope", "ChifferLead",
-    "Charang", "Solo Vox", "5th Saw", "Bass & Lead",
-    "Fantasia", "Warm Pad", "Polysynth", "Space Voice",
-    "Bowed Glass", "Metal Pad", "Halo Pad", "Sweep Pad",
-    "Ice Rain", "Soundtrack", "Crystal", "Atmosphere",
-    "Brightness", "Goblin", "Echo Drops", "Star Theme",
-    "Sitar", "Banjo", "Shamisen", "Koto",
-    "Kalimba", "Bagpipe", "Fiddle", "Shanai",
-    "Tinkle Bell", "Agogo", "Steel Drums", "Woodblock",
-    "Taiko", "Melo. Tom 1", "Synth Drum", "Reverse Cym",
-    "Gt.FretNoiz", "BreathNoise", "Seashore", "Bird",
-    "Telephone 1", "Helicopter", "Applause", "Gun Shot")
+include("instruments.jl")
+
+const pc = zeros(Int, 128)
+
+const instruments = sc88_instruments
+export instruments
 
 const families = (
     "Piano", "Chromatic Percussion", "Organ", "Guitar",
@@ -126,6 +99,19 @@ const meta = (
     "Sequence Number", "Text", "Copyright", "Sequence Name",
     "Instrument", "Lyric", "Marker", "Cue Point")
 
+
+function initializeprogramchangetable()
+    global pc
+    j = 1
+    for i in 0:127
+        pc[i + 1] = j
+        while instruments[j][2] == i
+            j = j+1
+        end
+    end
+end
+
+
 function printable(chars)
     result = ""
     for b in chars
@@ -187,7 +173,7 @@ function StandardMidiFile()
         smf.channel[ch] = Dict(:used => false,
                                :muted => false,
                                :name => "",
-                               :instrument => 0,
+                               :instrument => 1,
                                :family => "",
                                :variation => 0,
                                :level => 100,
@@ -452,7 +438,8 @@ end
 function chordinfo(smf)
     keys_pressed = 0
     for channel = 0:15
-        info = smf.channel[channel + 1]
+        part = channel + 1
+        info = smf.channel[part]
         if channel != 9 && info[:family] != "Bass"
             for note in info[:notes]
                 keys_pressed |= (1 << (note % 12))
@@ -507,10 +494,11 @@ end
 
 
 function allnotesoff(smf, channel)
-    for note in smf.channel[channel + 1][:notes]
+    part = channel + 1
+    for note in smf.channel[part][:notes]
         writemidi(smf, [0x80 + channel, note, 0])
     end
-    smf.channel[channel + 1][:notes] = []
+    smf.channel[part][:notes] = []
 end
 
 
@@ -575,48 +563,54 @@ end
 
 
 function channelinfo(smf, channel)
-    smf.channel[channel + 1]
+    part = channel + 1
+    smf.channel[part]
 end
 
 
 function setchannel(smf, channel; info...)
+    part = channel + 1
     info = Dict(info)
     if haskey(info, :muted)
-        smf.channel[channel + 1][:muted] = info[:muted]
+        smf.channel[part][:muted] = info[:muted]
         if info[:muted]
             allnotesoff(smf, channel)
         end
     elseif haskey(info, :solo)
         for ch = 0:15
-            smf.channel[ch + 1][:muted] = ch != channel
-            if smf.channel[ch + 1][:muted]
+            part = ch + 1
+            smf.channel[part][:muted] = ch != channel
+            if smf.channel[part][:muted]
                 allnotesoff(smf, ch)
             end
         end
     elseif haskey(info, :level)
-        smf.channel[channel + 1][:level] = info[:level]
+        smf.channel[part][:level] = info[:level]
         writemidi(smf, [0xb0 + channel, 7, info[:level]])
     elseif haskey(info, :sense)
-        smf.channel[channel + 1][:sense] = info[:sense]
+        smf.channel[part][:sense] = info[:sense]
         block = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
-        mididataset1(0x40101a + block[channel + 1] << 8, info[:sense])
+        mididataset1(0x40101a + block[part] << 8, info[:sense])
         sleep(0.04)
     elseif haskey(info, :delay)
-        smf.channel[channel + 1][:delay] = info[:delay]
+        smf.channel[part][:delay] = info[:delay]
         writemidi(smf, [0xb0 + channel, 94, info[:delay]])
     elseif haskey(info, :chorus)
-        smf.channel[channel + 1][:chorus] = info[:chorus]
+        smf.channel[part][:chorus] = info[:chorus]
         writemidi(smf, [0xb0 + channel, 93, info[:chorus]])
     elseif haskey(info, :reverb)
-        smf.channel[channel + 1][:reverb] = info[:reverb]
+        smf.channel[part][:reverb] = info[:reverb]
         writemidi(smf, [0xb0 + channel, 91, info[:reverb]])
     elseif haskey(info, :pan)
-        smf.channel[channel + 1][:pan] = info[:pan]
+        smf.channel[part][:pan] = info[:pan]
         writemidi(smf, [0xb0 + channel, 10, info[:pan]])
     elseif haskey(info, :instrument)
-        smf.channel[channel + 1][:instrument] = info[:instrument]
-        smf.channel[channel + 1][:name] = instruments[info[:instrument] + 1]
-        writemidi(smf, [0xc0 + channel, info[:instrument]])
+        name, program, variation = instruments[info[:instrument]]
+        smf.channel[part][:instrument] = info[:instrument]
+        smf.channel[part][:name] = name
+        writemidi(smf, [0xb0 + channel, 0x20, 0x02])
+        writemidi(smf, [0xb0 + channel, 0x00, variation])
+        writemidi(smf, [0xc0 + channel, program])
     end
 end
 
@@ -636,6 +630,7 @@ end
 
 function play(smf, device="")
     if smf.start < 0
+        initializeprogramchangetable()
         midiopen(device)
         mididataset1(0x400130, 0x04)   # Hall 1
         mididataset1(0x40007f, 0x00)   # GS Reset
@@ -697,7 +692,8 @@ function play(smf, device="")
         else
             me_type = message & 0xf0
             channel = message & 0x0f
-            info = smf.channel[channel + 1]
+            part = channel + 1
+            info = smf.channel[part]
             info[:used] = true
             if me_type in [0x80, 0x90] && channel != 9
                 byte1 += smf.key_shift
@@ -738,8 +734,8 @@ function play(smf, device="")
                     info[:delay] = byte2
                 end
             elseif me_type == 0xc0
-                info[:name] = instruments[byte1 + 1]
-                info[:instrument] = byte1
+                info[:name] = instruments[pc[byte1 + 1]][1]
+                info[:instrument] = pc[byte1 + 1]
                 info[:family] = families[div(byte1, 8) + 1]
             end
             if !info[:muted]

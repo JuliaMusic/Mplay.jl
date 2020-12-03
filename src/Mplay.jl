@@ -282,18 +282,18 @@ function char_callback(_, key)
     elseif key == ','
         if player.selection >= 0
             info = channelinfo(player.midi, player.selection)
-            value = info[:instrument] - 1
-            if value < 0 value = 127 end
-            setchannel(player.midi, player.selection, instrument=value)
+            instrument = info[:instrument] - 1
+            if instrument < 0 instrument = length(instruments) end
+            setchannel(player.midi, player.selection, instrument=instrument)
         else
             setsong(player.midi, bar=-1)
         end
     elseif key == '.'
         if player.selection >= 0
             info = channelinfo(player.midi, player.selection)
-            value = info[:instrument] + 1
-            if value > 127 value = 0 end
-            setchannel(player.midi, player.selection, instrument=value)
+            instrument = info[:instrument] + 1
+            if instrument > length(instruments) instrument = 1 end
+            setchannel(player.midi, player.selection, instrument=instrument)
         else
             setsong(player.midi, bar=+1)
         end
