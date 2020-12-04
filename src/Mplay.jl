@@ -41,7 +41,9 @@ end
 player = nothing
 
 function MidiPlayer(win, path, width, height)
-    Player(win, readsmf(path), falses(16), falses(16),
+    smf = readsmf(path)
+    loadarrangement(smf, path)
+    Player(win, smf, falses(16), falses(16),
            width, height, false, -1, false)
 end
 
@@ -150,15 +152,16 @@ function update(player)
         lr = "L R"[sign(pan - 64) + 2]
         draw_text(x, 327, string(lr, lpad(abs(pan - 64), 2)), color)
         if info[:used]
-            draw_text(x, 310, lpad(info[:instrument], 3), color)
-            draw_text(x - 5, 295, lpad(info[:variation], 2), color)
+            program, variation = getprogram(info[:instrument])
+            draw_text(x, 310, lpad(program, 3), color)
+            draw_text(x - 5, 295, lpad(variation, 2), color)
             draw_text(x, 204, lpad(info[:level], 3), color)
             copy_pixels(x + 13, 295, 12, 15, 754, 295)
             level = info[:level]
         else
             level = 0
         end
-        copy_pixels(x - 6, 204, 12, 91, 4, 204)
+        copy_pixels(x - 6, 217, 12, 78, 4, 217)
         copy_pixels(x - 6, 219 + div(level, 2), 12, 11, 735, 225)
         copy_pixels(x + 13, 219, 12, div(info[:intensity], 2), 754, 219)
         if info[:intensity] >= 2
@@ -297,6 +300,8 @@ function char_callback(_, key)
         else
             setsong(player.midi, bar=+1)
         end
+    elseif key == 's'
+        savearrangement(player.midi)
     end
 end
 

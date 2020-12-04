@@ -1,8 +1,11 @@
 module smf
 
+using Printf
+
 using ..midi
 
-export readsmf, play, fileinfo, songinfo, beatinfo, lyrics, chordinfo,
+export readsmf, loadarrangement, savearrangement, play,
+       fileinfo, songinfo, beatinfo, lyrics, chordinfo, getprogram,
        setsong, channelinfo, setchannel, cpuload
 export midi
 
@@ -21,8 +24,6 @@ debug = false
 const gm1 = true
 
 include("instruments.jl")
-
-const pc = zeros(Int, 128)
 
 const instruments = sc88_instruments
 export instruments
@@ -99,16 +100,23 @@ const meta = (
     "Sequence Number", "Text", "Copyright", "Sequence Name",
     "Instrument", "Lyric", "Marker", "Cue Point")
 
+const parameters = (
+    :muted, :channel, :instrument, :variation, :level, :pan,
+    :reverb, :chorus, :delay, :sense, :shift)
 
-function initializeprogramchangetable()
-    global pc
-    j = 1
-    for i in 0:127
-        pc[i + 1] = j
-        while instruments[j][2] == i
-            j = j+1
+
+function getinstrument(program, variation)
+    for i in 1:length(instruments)
+        if program == instruments[i][2] && variation == instruments[i][3]
+             return i
         end
     end
+    return program
+end
+
+
+function getprogram(instrument)
+   instruments[instrument][2], instruments[instrument][3]
 end
 
 
@@ -160,15 +168,17 @@ mutable struct SMF
     key_shift::Int
     mode::Int
     channel::Array{Any}
+    default::Array{Any}
 end
 
 
 function StandardMidiFile()
     ev = Array{Array{Any}}(undef,0)
     channel = Array{Any}(undef,16)
+    default = Array{Any}(undef,16)
     smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, 0, 0, 1,
               0, -1, 0, 0, 0, 384, 120, 0, "", "", "", [], div(60000000,120),
-              4, 4, 24, 8, 8, 0, 2, channel)
+              4, 4, 24, 8, 8, 0, 2, channel, default)
     for ch in 1:16
         smf.channel[ch] = Dict(:used => false,
                                :muted => false,
@@ -186,6 +196,17 @@ function StandardMidiFile()
                                :velocity => 0,
                                :intensity => 0,
                                :notes => [])
+        smf.default[ch] = Dict(:muted => -1,
+                               :channel => -1,
+                               :instrument => -1,
+                               :variation => -1,
+                               :level => -1,
+                               :pan => -1,
+                               :reverb => -1,
+                               :chorus => -1,
+                               :delay => -1,
+                               :sense => -1,
+                               :shift => -1)
     end
     smf
 end
@@ -394,6 +415,38 @@ function readsmf(path)
 end
 
 
+function loadarrangement(smf, path)
+    path = replace(path, ".mid" => ".arr")
+    if isfile(path)
+        file = open(path, "r")
+        line = readline(file)
+        while startswith(line, "#")
+            line = readline(file)
+        end
+        for ch = 1:16
+            row = [parse(Int, x) for x in split(line)]
+            for column in 1:11
+                smf.default[ch][parameters[column]] = row[column]
+            end
+            line = readline(file)
+        end
+        close(file)
+    end
+end
+
+
+function savearrangement(smf)
+    path = replace(smf.path, ".mid" => ".arr")
+    file = open(path, "w")
+    @printf(file, "#!MPlay\n# M Ch Ins Var Vol Pan Rev Cho Del Sen +/-\n")
+    for ch = 1:16
+        values = [smf.default[ch][parameters[column]] for column in 1:11]
+        @printf(file, "%3d %2d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n", values...)
+    end
+    close(file)
+end
+
+
 function fileinfo(smf)
     hsecs = div(round(Int, smf.playing_time), 10)
     secs = div(hsecs, 100)
@@ -586,23 +639,29 @@ function setchannel(smf, channel; info...)
         end
     elseif haskey(info, :level)
         smf.channel[part][:level] = info[:level]
+        smf.default[part][:level] = info[:level]
         writemidi(smf, [0xb0 + channel, 7, info[:level]])
     elseif haskey(info, :sense)
         smf.channel[part][:sense] = info[:sense]
+        smf.default[part][:sense] = info[:sense]
         block = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
         mididataset1(0x40101a + block[part] << 8, info[:sense])
         sleep(0.04)
     elseif haskey(info, :delay)
         smf.channel[part][:delay] = info[:delay]
+        smf.default[part][:delay] = info[:delay]
         writemidi(smf, [0xb0 + channel, 94, info[:delay]])
     elseif haskey(info, :chorus)
         smf.channel[part][:chorus] = info[:chorus]
+        smf.default[part][:chorus] = info[:chorus]
         writemidi(smf, [0xb0 + channel, 93, info[:chorus]])
     elseif haskey(info, :reverb)
         smf.channel[part][:reverb] = info[:reverb]
+        smf.default[part][:reverb] = info[:reverb]
         writemidi(smf, [0xb0 + channel, 91, info[:reverb]])
     elseif haskey(info, :pan)
         smf.channel[part][:pan] = info[:pan]
+        smf.default[part][:pan] = info[:pan]
         writemidi(smf, [0xb0 + channel, 10, info[:pan]])
     elseif haskey(info, :instrument)
         name, program, variation = instruments[info[:instrument]]
@@ -611,6 +670,8 @@ function setchannel(smf, channel; info...)
         writemidi(smf, [0xb0 + channel, 0x20, 0x02])
         writemidi(smf, [0xb0 + channel, 0x00, variation])
         writemidi(smf, [0xc0 + channel, program])
+        smf.default[part][:instrument] = program
+        smf.default[part][:variation] = variation
     end
 end
 
@@ -630,13 +691,25 @@ end
 
 function play(smf, device="")
     if smf.start < 0
-        initializeprogramchangetable()
         midiopen(device)
         mididataset1(0x400130, 0x04)   # Hall 1
         mididataset1(0x40007f, 0x00)   # GS Reset
         sleep(0.04)
         smf.start = time()
         writemidi(smf, [0xfc, 0xfa])
+        for part in 1:16
+            channel = part - 1
+            arr = smf.default[part]
+            if arr[:instrument] != -1 && arr[:variation] != -1
+                instrument = getinstrument(arr[:instrument], max(arr[:variation], 0))
+                setchannel(smf, channel, instrument=instrument)
+            end
+            if arr[:level] != -1 setchannel(smf, channel, level=arr[:level]) end
+            if arr[:pan] != -1 setchannel(smf, channel, pan=arr[:pan]) end
+            if arr[:reverb] != -1 setchannel(smf, channel, reverb=arr[:reverb]) end
+            if arr[:chorus] != -1 setchannel(smf, channel, chorus=arr[:chorus]) end
+            if arr[:delay] != -1 setchannel(smf, channel, delay=arr[:delay]) end
+        end
         smf.elapsed_time = smf.start
         smf.line = ""
     end
@@ -695,6 +768,7 @@ function play(smf, device="")
             part = channel + 1
             info = smf.channel[part]
             info[:used] = true
+            default = smf.default[part]
             if me_type in [0x80, 0x90] && channel != 9
                 byte1 += smf.key_shift
             end
@@ -719,26 +793,35 @@ function play(smf, device="")
                 info[:velocity] = byte2
             elseif me_type == 0xb0
                 if byte1 == 0
+                    default[:variation] != -1 && (byte2 = default[:variation])
                     info[:variation] = byte2
                 elseif byte1 == 32
                     byte2 = 2
                 elseif byte1 == 7
+                    default[:level] != -1 && (byte2 = default[:level])
                     info[:level] = byte2
                 elseif byte1 == 10
+                    default[:pan] != -1 && (byte2 = default[:pan])
                     info[:pan] = byte2
                 elseif byte1 == 91
+                    default[:reverb] != -1 && (byte2 = default[:reverb])
                     info[:reverb] = byte2
                 elseif byte1 == 93
+                    default[:chorus] != -1 && (byte2 = default[:chorus])
                     info[:chorus] = byte2
                 elseif byte1 == 94
+                    default[:delay] != -1 && (byte2 = default[:delay])
                     info[:delay] = byte2
                 end
             elseif me_type == 0xc0
-                info[:name] = instruments[pc[byte1 + 1]][1]
-                info[:instrument] = pc[byte1 + 1]
+                default[:instrument] != -1 && (byte1 = default[:instrument])
+                byte2 = max(default[:variation], 0)
+                instrument = getinstrument(byte1, byte2)
+                info[:name] = instruments[instrument][1]
+                info[:instrument] = instrument
                 info[:family] = families[div(byte1, 8) + 1]
             end
-            if !info[:muted]
+            if !info[:muted] && default[:muted] in (-1, 0)
                 if me_type != 0xc0
                     writemidi(smf, [message, byte1, byte2])
                 else
