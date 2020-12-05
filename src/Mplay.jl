@@ -130,8 +130,7 @@ function update(player)
         info = channelinfo(player.midi, channel)
         x = 10 + channel * 38
         if info[:used]
-            name = channel != 9 ? info[:name] : "Drums"
-            draw_text(620, 562 - channel * 14, name, color)
+            draw_text(620, 562 - channel * 14, info[:name], color)
             if player.muted[channel + 1]
                 copy_pixels(x - 6, 633, 31, 11, 735, 633)
             end

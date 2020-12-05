@@ -105,8 +105,17 @@ const parameters = (
     :reverb, :chorus, :delay, :sense, :shift)
 
 
-function getinstrument(program, variation)
-    for i in 1:length(instruments)
+function getinstrument(channel, program, variation)
+    first = 1
+    if channel == 9
+        for i in 1:length(instruments)
+            if startswith(instruments[i][1], "STANDARD")
+                first = i
+                break
+            end
+        end
+    end
+    for i in first:length(instruments)
         if program == instruments[i][2] && variation == instruments[i][3]
              return i
         end
@@ -118,6 +127,7 @@ end
 function getprogram(instrument)
    instruments[instrument][2], instruments[instrument][3]
 end
+
 
 
 function printable(chars)
@@ -701,7 +711,7 @@ function play(smf, device="")
             channel = part - 1
             arr = smf.default[part]
             if arr[:instrument] != -1 && arr[:variation] != -1
-                instrument = getinstrument(arr[:instrument], max(arr[:variation], 0))
+                instrument = getinstrument(channel, arr[:instrument], max(arr[:variation], 0))
                 setchannel(smf, channel, instrument=instrument)
             end
             if arr[:level] != -1 setchannel(smf, channel, level=arr[:level]) end
@@ -816,7 +826,7 @@ function play(smf, device="")
             elseif me_type == 0xc0
                 default[:instrument] != -1 && (byte1 = default[:instrument])
                 byte2 = max(default[:variation], 0)
-                instrument = getinstrument(byte1, byte2)
+                instrument = getinstrument(channel, byte1, byte2)
                 info[:name] = instruments[instrument][1]
                 info[:instrument] = instrument
                 info[:family] = families[div(byte1, 8) + 1]
