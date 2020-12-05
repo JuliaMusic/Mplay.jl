@@ -104,16 +104,23 @@ const parameters = (
     :muted, :channel, :instrument, :variation, :level, :pan,
     :reverb, :chorus, :delay, :sense, :shift)
 
+firstdrumset = 0
+
 
 function getinstrument(channel, program, variation)
-    first = 1
+    global firstdrumset
     if channel == 9
-        for i in 1:length(instruments)
-            if startswith(instruments[i][1], "STANDARD")
-                first = i
-                break
+        if firstdrumset == 0
+            for i in 1:length(instruments)
+                if startswith(instruments[i][1], "STANDARD")
+                    firstdrumset = i
+                    break
+                end
             end
         end
+        first = firstdrumset
+    else
+        first = 1
     end
     for i in first:length(instruments)
         if program == instruments[i][2] && variation == instruments[i][3]
