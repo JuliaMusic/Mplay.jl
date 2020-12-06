@@ -742,6 +742,10 @@ function play(smf, device="")
             delta = min(delta, 1.0 / (smf.division / 24))
             return delta
         end
+        drift = now * smf.division * 1000000 / smf.tempo - at
+        if drift > 20
+            @printf("MIDI sync drift: %d\n", drift)
+        end
         timing(smf, at)
         smf.at = at
         if message == 0xf0 || message == 0xf7
