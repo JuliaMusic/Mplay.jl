@@ -440,4 +440,15 @@ end
 
 export mplay
 
+function main()
+    if length(ARGS) > 0
+        device = length(ARGS) > 1 ? ARGS[2] : ""
+        mplay(ARGS[1], device)
+    end
 end
+
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end
+
+end #module
