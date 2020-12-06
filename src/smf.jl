@@ -744,8 +744,11 @@ function play(smf, device="")
         end
         timing(smf, at)
         smf.at = at
-        if message == 0xff
-            (at, message, me_type, data) = ev
+        if message == 0xf0 || message == 0xf7
+            smf.next += 1
+            return 0
+        elseif message == 0xff
+            at, message, me_type, data = ev
             if me_type == 0x05
                 if data[1] in [13, 10]
                     smf.line = ""
