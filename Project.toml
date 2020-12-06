@@ -3,5 +3,8 @@ uuid = "741d1e83-496a-487a-9490-6968f7c0e369"
 author = ["Josef Heinen (@jheinen)"]
 version = "1.0.0"
 
+[deps]
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
 [compat]
 julia = "1"
