@@ -256,11 +256,8 @@ function extractnumber(smf)
     if smf.mf[smf.off] & 0x80 != 0
         while true
             value = (value << 7) + (smf.mf[smf.off] & 0x7f)
-            if smf.mf[smf.off] & 0x80 != 0
-                smf.off += 1
-            else
-                break
-            end
+            smf.mf[smf.off] & 0x80 != 0 || break
+            smf.off += 1
         end
     else
         value = smf.mf[smf.off]
