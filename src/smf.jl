@@ -20,6 +20,7 @@ function hex(n, pad::Int=0)
 end
 
 debug = false
+warnings = false
 
 const gm1 = true
 
@@ -200,6 +201,7 @@ function StandardMidiFile()
         smf.channel[ch] = Dict(:used => false,
                                :muted => false,
                                :name => "",
+                               :channel => ch - 1,
                                :instrument => 1,
                                :family => "",
                                :variation => 0,
@@ -739,9 +741,11 @@ function play(smf, device="")
             delta = min(delta, 1.0 / (smf.division / 24))
             return delta
         end
-        drift = now * smf.division * 1000000 / smf.tempo - at
-        if drift > 20
-            @printf("MIDI sync drift: %d\n", drift)
+        if warnings
+            drift = now * smf.division * 1000000 / smf.tempo - at
+            if drift > 20
+                @printf("MIDI sync drift: %d\n", drift)
+            end
         end
         timing(smf, at)
         smf.at = at
