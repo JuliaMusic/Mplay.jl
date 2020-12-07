@@ -1,5 +1,5 @@
 /*
- macOS X:
+ macOS:
    cc -shared -o libmidi.dylib libmidi.c \
       -framework CoreMIDI -framework CoreAudio -framework AudioUnit \
       -framework AudioToolbox -framework Cocoa
