@@ -6,7 +6,7 @@ using ..midi
 
 export readsmf, loadarrangement, savearrangement, play,
        fileinfo, songinfo, beatinfo, lyrics, chordinfo, getprogram,
-       setsong, channelinfo, setchannel, cpuload
+       setsong, channelinfo, setchannel, allnotesoff, cpuload
 export midi
 
 oct(n) = string(n, base=8)
