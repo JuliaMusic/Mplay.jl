@@ -143,7 +143,9 @@ unsigned int readchar(void)
 
     if (read(0, &ch, 1) == 1) {
         if (ch == 27) {
-            if (read(0, &ch, 1) == 1) {
+            if (!kbhit()) {
+                key = ch;
+            } else if (read(0, &ch, 1) == 1) {
                 if (ch == '[' || ch == 'O') {
                     if (read(0, &ch, 1) == 1) {
                         switch (ch) {
