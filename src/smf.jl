@@ -708,10 +708,12 @@ end
 function updatelevels(smf)
     for channel in 0:15
         info = channelinfo(smf, channel)
-        if info[:intensity] >= 2
-            info[:intensity] -= 2
-        else
-            info[:intensity] = 0
+        if info[:notes] == []
+            if info[:intensity] >= 2
+                info[:intensity] -= 2
+            else
+                info[:intensity] = 0
+            end
         end
     end
 end
