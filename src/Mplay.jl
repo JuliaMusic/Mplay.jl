@@ -163,11 +163,6 @@ function update(player)
         copy_pixels(x - 6, 217, 12, 78, 4, 217)
         copy_pixels(x - 6, 219 + div(level, 2), 12, 11, 735, 225)
         copy_pixels(x + 13, 219, 12, div(info[:intensity], 2), 754, 219)
-        if info[:intensity] >= 2
-            info[:intensity] -= 2
-        else
-            info[:intensity] = 0
-        end
     end
 
     draw_text(15, 177, fileinfo(player.midi))

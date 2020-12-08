@@ -705,6 +705,18 @@ function cpuload()
 end
 
 
+function updatelevels(smf)
+    for channel in 0:15
+        info = channelinfo(smf, channel)
+        if info[:intensity] >= 2
+            info[:intensity] -= 2
+        else
+            info[:intensity] = 0
+        end
+    end
+end
+
+
 function play(smf, device="")
     if smf.start < 0
         midiopen(device)
@@ -735,7 +747,8 @@ function play(smf, device="")
     for ev in smf.ev[smf.next:end]
         at, message, byte1, byte2 = ev
         now = time() - smf.elapsed_time
-        while at > now * smf.division * 1000000 / smf.tempo
+        updatelevels(smf)
+        if at > now * smf.division * 1000000 / smf.tempo
             timing(smf, at)
             delta = (at - now * smf.division * 1000000 / smf.tempo) / 1000
             delta = min(delta, 1.0 / (smf.division / 24))
