@@ -469,7 +469,7 @@ function fileinfo(smf)
     mins = div(secs, 60)
     secs %= 60
     hsecs %= 100
-    string(rpad(smf.path, 12), "     Format:  $(smf.format)     Tracks:  $(smf.tracks)   Playing Time:  ", dec(mins, 2), ":", dec(secs, 2), ".", dec(hsecs, 2), "     Key:  ", lpad(keys[smf.key + 7 + 1], 2), modes[smf.mode + 1], "/", rpad(smf.key_shift, 3))
+    string(rpad(smf.path, 12), "   Format: $(smf.format)   Tracks: $(smf.tracks)  Playing Time:  ", dec(mins, 2), ":", dec(secs, 2), ".", dec(hsecs, 2), "   Key:  ", lpad(keys[smf.key + 7 + 1], 2), modes[smf.mode + 1], "/", rpad(smf.key_shift, 3))
 end
 
 
@@ -485,7 +485,7 @@ function songinfo(smf)
     mins = div(secs, 60)
     secs %= 60
     hsecs %= 100
-    string("Clock:  ", dec(mins, 2), ":", dec(secs, 2), ".", dec(hsecs, 2), "   Song Position:  ", dec(div(div(ticks, smf.division), 4) + 1, 4), ":", dec(div(ticks, smf.division) % smf.numerator + 1, 2), ":", dec(div(ticks * 1000, smf.division) % 1000, 3), "   Tempo:  ", lpad(dec(smf.bpm), 3), " bpm   Time:  ", dec(smf.numerator, 2), "/", dec(smf.denominator, 2), "  ", dec(smf.clocks_per_beat, 2), "/", dec(smf.notes_per_quarter, 2))
+    string("Clock: ", dec(mins, 2), ":", dec(secs, 2), ".", dec(hsecs, 2), "   Song Position: ", dec(div(div(ticks, smf.division), 4) + 1, 4), ":", dec(div(ticks, smf.division) % smf.numerator + 1, 2), ":", dec(div(ticks * 1000, smf.division) % 1000, 3), "  Tempo: ", lpad(dec(smf.bpm), 3), " bpm   Time: ", dec(smf.numerator, 2), "/", dec(smf.denominator, 2), "  ", dec(smf.clocks_per_beat, 2), "/", dec(smf.notes_per_quarter, 2))
 end
 
 
