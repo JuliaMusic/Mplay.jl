@@ -36,11 +36,11 @@ function readchar()
 end
 export readchar
 
-function outtextxy(x::Int, y::Int, s::AbstractString)
+function outtextxy(x::Int, y::Int, s::AbstractString, color=0)
     ccall((:outtextxy, libconsole),
           Nothing,
-          (Int32, Int32, Cstring),
-          x, y, s)
+          (Int32, Int32, Cstring, Int32),
+          x, y, s, color)
 end
 export outtextxy
 

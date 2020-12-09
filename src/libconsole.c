@@ -26,8 +26,21 @@
 #define DOWN 336
 
 #if defined(_WIN32)
+static int code[] = {
+    7, 0, 4, 2, 6, 1, 5, 3, 7, 8, 12, 10, 14, 9, 13, 11, 15
+};
+#else
+static char *code[] = {
+    "\033[m",
+    "\033[30m", "\033[31m", "\033[32m", "\033[33m", "\033[34m", "\033[35m", "\033[36m", "\033[37m",
+    "\033[90m", "\033[91m", "\033[92m", "\033[93m", "\033[94m", "\033[95m", "\033[96m", "\033[97m",
+};
+#endif
+
+#if defined(_WIN32)
 static HANDLE std_input, std_output = (HANDLE) NULL;
-static DWORD saved_console_mode, console_mode;
+static DWORD saved_console_mode;
+static CONSOLE_CURSOR_INFO saved_cursor_info;
 #else
 static struct termios Iterm, *pIterm = NULL;
 #endif
@@ -38,6 +51,7 @@ void resettty(void)
     COORD cursor = { 0, 0 };
 
     if (std_output != NULL) {
+        SetConsoleCursorInfo(std_output, &saved_cursor_info);
         SetConsoleCursorPosition(std_output, cursor);
         SetConsoleMode(std_output, saved_console_mode);
     }
@@ -54,6 +68,8 @@ void settty(void)
 {
 #if defined(_WIN32)
     COORD cursor = { 0, 0 };
+    DWORD console_mode;
+    CONSOLE_CURSOR_INFO cursor_info;
 
     if (std_output != NULL)
         return;
@@ -66,6 +82,12 @@ void settty(void)
         ~ENABLE_LINE_INPUT & ~ENABLE_ECHO_INPUT;
 
     SetConsoleMode(std_input, console_mode);
+    SetConsoleOutputCP(CP_UTF8);
+
+    GetConsoleCursorInfo(std_output, &saved_cursor_info);
+    cursor_info = saved_cursor_info;
+    cursor_info.bVisible = FALSE;
+    SetConsoleCursorInfo(std_output, &cursor_info);
 #else
     struct termios term;
 
@@ -168,20 +190,25 @@ unsigned int readchar(void)
     return key;
 }
 
-void outtextxy(int x, int y, char *s)
+void outtextxy(int x, int y, char *s, int color)
 {
 #if defined(_WIN32)
+    wchar_t w_s[255];
     COORD cursor;
-    DWORD num_write;
 
     cursor.X = x - 1;
     cursor.Y = y - 1;
     SetConsoleCursorPosition(std_output, cursor);
 
-    SetConsoleTextAttribute(std_output, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    WriteConsole(std_output, s, strlen(s), &num_write, NULL);
+    SetConsoleTextAttribute(std_output, code[color]);
+
+    MultiByteToWideChar(CP_UTF8, 0, s, strlen(s) + 1, w_s, 255);
+    WriteConsoleW(std_output, w_s, lstrlenW(w_s), NULL, NULL);
 #else
-    printf("\033[%d;%dH%s", y, x, s);
+    if (color >= 1 && color <= 16)
+        printf("\033[%d;%dH%s%s%s", y, x, code[color], s, code[0]);
+    else
+        printf("\033[%d;%dH%s", y, x, s);
     fflush(stdout);
 #endif
 }
@@ -189,16 +216,17 @@ void outtextxy(int x, int y, char *s)
 void cls(void)
 {
 #if defined(_WIN32)
+    CONSOLE_SCREEN_BUFFER_INFO info;
     COORD cursor = { 0, 0 };
     DWORD num_write;
 
+    GetConsoleScreenBufferInfo(std_output, &info);
     FillConsoleOutputAttribute(std_output,
         FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE, 24 * 80, cursor,
         &num_write);
-    FillConsoleOutputCharacter(std_output, ' ', 24 * 80, cursor, &num_write);
+    FillConsoleOutputCharacter(std_output, ' ', info.dwSize.X * info.dwSize.Y, cursor, &num_write);
 #else
     printf("\033[H\033[J");
     fflush(stdout);
 #endif
 }
-
