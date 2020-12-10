@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <signal.h>
+typedef void (*sighandler_t)(int);
 #endif
 
 #define F1 315
@@ -42,7 +43,8 @@ static HANDLE std_input, std_output = (HANDLE) NULL;
 static DWORD saved_console_mode;
 static CONSOLE_CURSOR_INFO saved_cursor_info;
 #else
-static struct termios Iterm, *pIterm = NULL;
+static struct termios saved_term;
+static sighandler_t saved_handler = NULL;
 #endif
 
 void resettty(void)
@@ -56,10 +58,11 @@ void resettty(void)
         SetConsoleMode(std_output, saved_console_mode);
     }
 #else
-    if (pIterm != NULL) {
-        pIterm = NULL;
-        if (tcsetattr(0, TCSANOW, &Iterm) < 0)
+    if (saved_handler != NULL) {
+        if (tcsetattr(0, TCSANOW, &saved_term) < 0)
             perror("tcsetattr");
+
+        signal(SIGQUIT, saved_handler);
     }
 #endif
 }
@@ -91,14 +94,13 @@ void settty(void)
 #else
     struct termios term;
 
-    if (pIterm != NULL)
+    if (saved_handler != NULL)
         return;
 
-    if (tcgetattr(0, &Iterm) < 0)
+    if (tcgetattr(0, &saved_term) < 0)
         perror("tcgetattr");
 
-    pIterm = &Iterm;
-    term = Iterm;
+    term = saved_term;
     term.c_cflag |= (CREAD | CS8 | CLOCAL);
     term.c_lflag &= ~(ECHO | ICANON | ISIG);
     term.c_iflag &= ~(IGNCR | INLCR | ICRNL);
@@ -106,10 +108,7 @@ void settty(void)
     if (tcsetattr(0, TCSAFLUSH, &term) < 0)
         perror("tcsetattr");
 
-    signal(SIGHUP, (void (*) (int))resettty);
-    signal(SIGQUIT, (void (*) (int))resettty);
-    signal(SIGBUS, (void (*) (int))resettty);
-    signal(SIGSEGV, (void (*) (int))resettty);
+    saved_handler = signal(SIGQUIT, (void (*) (int))resettty);
 #endif
 }
 
