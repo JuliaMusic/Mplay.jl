@@ -276,7 +276,7 @@ function char_callback(_, key)
         if player.selection >= 0
             info = channelinfo(player.midi, player.selection)
             instrument = info[:instrument] - 1
-            if instrument < 0 instrument = length(instruments) end
+            if instrument < 1 instrument = length(instruments) end
             setchannel(player.midi, player.selection, instrument=instrument)
         else
             setsong(player.midi, bar=-1)
