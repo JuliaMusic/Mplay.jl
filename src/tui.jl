@@ -23,7 +23,7 @@ const intensities = (
 
 include("player.jl")
 
-function update(smf)
+function update(player, smf)
     outtextxy(1, 1, fileinfo(smf))
     outtextxy(1, 2, songinfo(smf))
     outtextxy(1, 4, "Midi Channel    Name/Family  Instrument   Ch Ins Var Vol Pan Rev Cho Del Sen +/-")
@@ -33,7 +33,7 @@ function update(smf)
             program, variation = getprogram(info[:instrument])
             pan = string(info[:pan] < 64 ? "L" : info[:pan] > 64 ? "R" : " ", abs(info[:pan] - 64))
             s = @sprintf "%-2d %-8s %15s: %-12s %2d %3d %3d %3d %3s %3d %3d %3d %3d %3d" ch intensities[div(info[:intensity],15)+1] info[:family] info[:name] info[:channel] program variation info[:level] pan info[:reverb] info[:chorus] info[:delay] info[:sense] info[:shift]-64;
-            outtextxy(1, ch + 4, s)
+            outtextxy(1, ch + 4, s, player.selection == ch-1 ? 2 : 0)
         end
     end
 
@@ -53,7 +53,7 @@ function mplay(path, device="")
     cls()
     while true
         delta = play(smf, device)
-        update(smf)
+        update(player, smf)
         if delta > 0
             sleep(delta)
         end
