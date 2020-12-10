@@ -10,14 +10,6 @@ using .GLFW
 using .OpenGL
 using .smf
 
-const MUTE_ON_OFF = Dict{Char, Any}(
-    'b' => ["Bass"], 'g' => ["Guitar"],
-    'k' => ["Piano", "Organ", "Strings", "Ensemble"])
-
-const SOLO_ON = Dict{Char, Any}(
-    'B' => ["Bass"], 'G' => ["Guitar"],
-    'K' => ["Piano", "Organ", "Strings", "Ensemble"])
-
 const shortcuts = Dict(
     GLFW.KEY_ESCAPE => '\e',
     GLFW.KEY_TAB => '\t',
@@ -26,13 +18,18 @@ const shortcuts = Dict(
     GLFW.KEY_LEFT => ',' ,
     GLFW.KEY_RIGHT => '.' )
 
+const MUTE_ON_OFF = Dict{Char, Any}(
+    'b' => ["Bass"], 'g' => ["Guitar"],
+    'k' => ["Piano", "Organ", "Strings", "Ensemble"])
+
+const SOLO_ON = Dict{Char, Any}(
+    'B' => ["Bass"], 'G' => ["Guitar"],
+    'K' => ["Piano", "Organ", "Strings", "Ensemble"])
+
 mutable struct Player
-    win::Any
     midi::Any
     muted::Array{Bool,1}
     solo::Array{Bool,1}
-    width::Int
-    height::Int
     button::Bool
     selection::Int
     pause::Bool
@@ -40,11 +37,10 @@ end
 
 player = nothing
 
-function MidiPlayer(win, path, width, height)
+function MidiPlayer(path)
     smf = readsmf(path)
     loadarrangement(smf, path)
-    Player(win, smf, falses(16), falses(16),
-           width, height, false, -1, false)
+    Player(smf, falses(16), falses(16), false, -1, false)
 end
 
 function read_image(path)
@@ -416,7 +412,7 @@ function mplay(path, device="")
     GLFW.SetMouseButtonCallback(win, mouse_button_callback)
     GLFW.SetCursorPosCallback(win, cursor_pos_callback)
 
-    player = MidiPlayer(win, path, width, height)
+    player = MidiPlayer(path)
 
     while GLFW.WindowShouldClose(win) == 0
         delta = play(player.midi, device)
