@@ -21,6 +21,8 @@ const intensities = (
     "████████"
 )
 
+include("player.jl")
+
 function update(smf)
     outtextxy(1, 1, fileinfo(smf))
     outtextxy(1, 2, songinfo(smf))
@@ -44,8 +46,8 @@ function update(smf)
 end
 
 function mplay(path, device="")
-    smf = readsmf(path)
-    loadarrangement(smf, path)
+    player = MidiPlayer(path)
+    smf = player.midi
 
     settty()
     cls()
@@ -56,10 +58,13 @@ function mplay(path, device="")
             sleep(delta)
         end
         if kbhit()
-            if readchar() == Int('\e')
+            key = readchar()
+            if key == Int('\e')
                 for channel in 0:15 allnotesoff(smf, channel) end
                 cls();
                 break
+            else
+                dispatch(player, Char(key))
             end
         end
         if smf.at >= smf.atend
