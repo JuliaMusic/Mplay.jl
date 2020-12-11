@@ -17,14 +17,14 @@
 typedef void (*sighandler_t)(int);
 #endif
 
-#define F1 315
-#define F2 316
-#define F3 317
-#define F4 318
-#define UP 328
-#define LEFT 331
-#define RIGHT 333
-#define DOWN 336
+#define KEY_F1    290
+#define KEY_F2    291
+#define KEY_F3    292
+#define KEY_F4    293
+#define	KEY_RIGHT 262
+#define	KEY_LEFT  263
+#define	KEY_DOWN  264
+#define	KEY_UP    265
 
 #if defined(_WIN32)
 static int code[] = {
@@ -146,14 +146,14 @@ unsigned int readchar(void)
 
             if (ch == 0 || ch >= 0xe0 || key >= 0x60) {
                 switch (key) {
-                    case VK_UP: key = UP; break;
-                    case VK_LEFT: key = LEFT; break;
-                    case VK_DOWN: key = DOWN; break;
-                    case VK_RIGHT: key = RIGHT; break;
-                    case VK_F1: key = F1; break;
-                    case VK_F2: key = F2; break;
-                    case VK_F3: key = F3; break;
-                    case VK_F4: key = F4; break;
+                    case VK_UP: key = KEY_UP; break;
+                    case VK_LEFT: key = KEY_LEFT; break;
+                    case VK_DOWN: key = KEY_DOWN; break;
+                    case VK_RIGHT: key = KEY_RIGHT; break;
+                    case VK_F1: key = KEY_F1; break;
+                    case VK_F2: key = KEY_F2; break;
+                    case VK_F3: key = KEY_F3; break;
+                    case VK_F4: key = KEY_F4; break;
                 }
             } else
                 key = ch;
@@ -170,14 +170,14 @@ unsigned int readchar(void)
                 if (ch == '[' || ch == 'O') {
                     if (read(0, &ch, 1) == 1) {
                         switch (ch) {
-                        case 'A': key = UP; break;
-                        case 'B': key = DOWN; break;
-                        case 'C': key = RIGHT; break;
-                        case 'D': key = LEFT; break;
-                        case 'P': key = F1; break;
-                        case 'Q': key = F2; break;
-                        case 'R': key = F3; break;
-                        case 'S': key = F4; break;
+                        case 'A': key = KEY_UP; break;
+                        case 'B': key = KEY_DOWN; break;
+                        case 'C': key = KEY_RIGHT; break;
+                        case 'D': key = KEY_LEFT; break;
+                        case 'P': key = KEY_F1; break;
+                        case 'Q': key = KEY_F2; break;
+                        case 'R': key = KEY_F3; break;
+                        case 'S': key = KEY_F4; break;
                         }
                     }
                 }

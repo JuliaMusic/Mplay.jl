@@ -10,15 +10,15 @@ using .GLFW
 using .OpenGL
 using .smf
 
-const shortcuts = Dict(
-    GLFW.KEY_ESCAPE => '\e',
-    GLFW.KEY_TAB => '\t',
-    GLFW.KEY_UP => '+' ,
-    GLFW.KEY_DOWN => '-' ,
-    GLFW.KEY_LEFT => ',' ,
-    GLFW.KEY_RIGHT => '.' )
-
 include("player.jl")
+
+const shortcuts = Dict(
+    GLFW.KEY_ESCAPE => Int('\e'),
+    GLFW.KEY_TAB => Int('\t'),
+    GLFW.KEY_UP => KEY_UP,
+    GLFW.KEY_DOWN => KEY_DOWN,
+    GLFW.KEY_LEFT => KEY_LEFT,
+    GLFW.KEY_RIGHT => KEY_RIGHT )
 
 function read_image(path)
     f = open(path)
