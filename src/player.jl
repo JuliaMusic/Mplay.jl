@@ -1,3 +1,9 @@
+
+const KEY_RIGHT = 262
+const KEY_LEFT  = 263
+const KEY_DOWN  = 264
+const KEY_UP    = 265
+
 const MUTE_ON_OFF = Dict{Char, Any}(
     'b' => ["Bass"], 'g' => ["Guitar"],
     'k' => ["Piano", "Organ", "Strings", "Ensemble"])
@@ -47,15 +53,18 @@ function dispatch(player, key)
     if key == '\e'
         setsong(player.midi, action=:exit)
         exit(0)
-    elseif key == '\t'
-        if player.selection >= 0
-            player.selection = (player.selection + 1) % 16
-        else
-            player.selection = 0
-        end
+    elseif key == Char(KEY_DOWN)
+        if player.selection < 15 player.selection += 1 else player.selection = 0 end
         info = channelinfo(player.midi, player.selection)
         while !info[:used]
-            player.selection = (player.selection + 1) % 16
+            if player.selection < 15 player.selection += 1 else player.selection = 0 end
+            info = channelinfo(player.midi, player.selection)
+        end
+    elseif key == Char(KEY_UP)
+        if player.selection > 0 player.selection -= 1 else player.selection = 15 end
+        info = channelinfo(player.midi, player.selection)
+        while !info[:used]
+            if player.selection > 0 player.selection -= 1 else player.selection = 15 end
             info = channelinfo(player.midi, player.selection)
         end
     elseif key == ' '
@@ -102,7 +111,7 @@ function dispatch(player, key)
         setsong(player.midi, bpm=-1)
     elseif key == '+'
         setsong(player.midi, bpm=+1)
-    elseif key == ','
+    elseif key == ',' || key == Char(KEY_LEFT)
         if player.selection >= 0
             info = channelinfo(player.midi, player.selection)
             instrument = info[:instrument] - 1
@@ -111,7 +120,7 @@ function dispatch(player, key)
         else
             setsong(player.midi, bar=-1)
         end
-    elseif key == '.'
+    elseif key == '.' || key == Char(KEY_RIGHT)
         if player.selection >= 0
             info = channelinfo(player.midi, player.selection)
             instrument = info[:instrument] + 1
