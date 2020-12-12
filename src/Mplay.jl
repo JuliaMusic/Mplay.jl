@@ -8,6 +8,7 @@ include("smf.jl")
 using .GLFW
 
 using .OpenGL
+using .midi
 using .smf
 
 include("player.jl")

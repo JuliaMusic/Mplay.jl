@@ -29,7 +29,7 @@ function update(player, smf)
     outtextxy(1, 2, songinfo(smf))
     outtextxy(1, 4, "Midi Channel    Name/Family  Instrument   Ch Ins Var Vol Pan Rev Cho Del Sen +/-")
     if player.selection >= 0
-        outtextxy([30, 54, 58, 62, 66, 70, 78][player.parameter], 4, ["Instrument", "Vol", "Pan", "Rev", "Cho", "Del", "+/-"][player.parameter], 10)
+        outtextxy([30, 54, 58, 62, 66, 70, 74, 78][player.parameter], 4, ["Instrument", "Vol", "Pan", "Rev", "Cho", "Del", "Sen", "+/-"][player.parameter], 10)
     end
 
     for ch in 1:16
