@@ -6,6 +6,7 @@ include("midi.jl")
 include("smf.jl")
 include("console.jl")
 
+using .midi
 using .smf
 using .console
 
@@ -27,6 +28,10 @@ function update(player, smf)
     outtextxy(1, 1, fileinfo(smf))
     outtextxy(1, 2, songinfo(smf))
     outtextxy(1, 4, "Midi Channel    Name/Family  Instrument   Ch Ins Var Vol Pan Rev Cho Del Sen +/-")
+    if player.selection >= 0
+        outtextxy([30, 54, 58, 62, 66, 70, 78][player.parameter], 4, ["Instrument", "Vol", "Pan", "Rev", "Cho", "Del", "+/-"][player.parameter], 10)
+    end
+
     for ch in 1:16
         info = channelinfo(smf, ch-1)
         if info[:used]

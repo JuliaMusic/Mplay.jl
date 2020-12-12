@@ -12,12 +12,16 @@ const SOLO_ON = Dict{Char, Any}(
     'B' => ["Bass"], 'G' => ["Guitar"],
     'K' => ["Piano", "Organ", "Strings", "Ensemble"])
 
+const parameters = Dict(
+    1 => :instrument, 2 => :level, 3 => :pan, 4 => :reverb, 5 => :chorus, 6 => :delay, 7 => :shift)
+
 mutable struct Player
     midi::Any
     muted::Array{Bool,1}
     solo::Array{Bool,1}
     button::Bool
     selection::Int
+    parameter::Int
     pause::Bool
 end
 
@@ -26,7 +30,7 @@ player = nothing
 function MidiPlayer(path)
     smf = readsmf(path)
     loadarrangement(smf, path)
-    Player(smf, falses(16), falses(16), false, -1, false)
+    Player(smf, falses(16), falses(16), false, -1, 1, false)
 end
 
 function change_mute_state(player, channel)
@@ -49,10 +53,42 @@ function change_solo_state(player, channel)
     end
 end
 
+function controlchange(player, value)
+    info = channelinfo(player.midi, player.selection)
+    if player.parameter == 1
+        instrument = min(max(info[:instrument] + value, 1), length(instruments))
+        setchannel(player.midi, player.selection, instrument=instrument)
+    elseif player.parameter == 2
+        level = min(max(info[:level] + value, 0), 127)
+        setchannel(player.midi, player.selection, level=level)
+    elseif player.parameter == 3
+        pan = min(max(info[:pan] + value, 0), 127)
+        setchannel(player.midi, player.selection, pan=pan)
+    elseif player.parameter == 4
+        reverb = min(max(info[:reverb] + value, 0), 127)
+        setchannel(player.midi, player.selection, reverb=reverb)
+    elseif player.parameter == 5
+        chorus = min(max(info[:chorus] + value, 0), 127)
+        setchannel(player.midi, player.selection, chorus=chorus)
+    elseif player.parameter == 6
+        delay = min(max(info[:delay] + value, 0), 127)
+        setchannel(player.midi, player.selection, delay=delay)
+    elseif player.parameter == 7
+        shift = min(max(info[:shift] + value, 40), 88)
+        block = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
+        mididataset1(0x401016 + (block[player.selection + 1] << 8), shift)
+        info[:shift] = shift
+    end
+end
+
 function dispatch(player, key)
     if key == '\e'
         setsong(player.midi, action=:exit)
         exit(0)
+    elseif key == '\r'
+        player.selection = -1
+    elseif key == '\t'
+        if player.parameter < length(parameters) player.parameter += 1 else player.parameter = 1 end
     elseif key == Char(KEY_DOWN)
         if player.selection < 15 player.selection += 1 else player.selection = 0 end
         info = channelinfo(player.midi, player.selection)
@@ -113,19 +149,13 @@ function dispatch(player, key)
         setsong(player.midi, bpm=+1)
     elseif key == ',' || key == Char(KEY_LEFT)
         if player.selection >= 0
-            info = channelinfo(player.midi, player.selection)
-            instrument = info[:instrument] - 1
-            if instrument < 1 instrument = length(instruments) end
-            setchannel(player.midi, player.selection, instrument=instrument)
+            controlchange(player, -1)
         else
             setsong(player.midi, bar=-1)
         end
     elseif key == '.' || key == Char(KEY_RIGHT)
         if player.selection >= 0
-            info = channelinfo(player.midi, player.selection)
-            instrument = info[:instrument] + 1
-            if instrument > length(instruments) instrument = 1 end
-            setchannel(player.midi, player.selection, instrument=instrument)
+            controlchange(player, +1)
         else
             setsong(player.midi, bar=+1)
         end
