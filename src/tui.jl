@@ -11,14 +11,14 @@ using .console
 
 const intensities = (
     "        ",
-    "█       ",
-    "██      ",
-    "███     ",
-    "████    ",
-    "█████   ",
-    "██████  ",
-    "███████ ",
-    "████████"
+    "●       ",
+    "●●      ",
+    "●●●     ",
+    "●●●●    ",
+    "●●●●●   ",
+    "●●●●●●  ",
+    "●●●●●●● ",
+    "●●●●●●●●"
 )
 
 include("player.jl")
@@ -36,7 +36,8 @@ function update(player, smf)
         if info[:used]
             program, variation = getprogram(info[:instrument])
             pan = string(info[:pan] < 64 ? "L" : info[:pan] > 64 ? "R" : " ", abs(info[:pan] - 64))
-            s = @sprintf "%-2d %-8s %15s: %-12s %2d %3d %3d %3d %3s %3d %3d %3d %3d %3d" ch intensities[div(info[:intensity],15)+1] info[:family] info[:name] info[:channel] program variation info[:level] pan info[:reverb] info[:chorus] info[:delay] info[:sense] info[:shift]-64;
+            state = info[:muted] ? "x" : " "
+            s = @sprintf "%-2d%s%-8s %15s: %-12s %2d %3d %3d %3d %3s %3d %3d %3d %3d %3d" ch state intensities[div(info[:intensity],15)+1] info[:family] info[:name] info[:channel] program variation info[:level] pan info[:reverb] info[:chorus] info[:delay] info[:sense] info[:shift]-64;
             outtextxy(1, ch + 4, s, player.selection == ch-1 ? 2 : 0)
         end
     end
