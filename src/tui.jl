@@ -6,7 +6,6 @@ include("midi.jl")
 include("smf.jl")
 include("console.jl")
 
-using .midi
 using .smf
 using .console
 

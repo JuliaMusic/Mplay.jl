@@ -75,14 +75,10 @@ function controlchange(player, value)
         setchannel(player.midi, player.selection, delay=delay)
     elseif player.parameter == 7
         sense = min(max(info[:sense] + value, 0), 127)
-        block = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
-        mididataset1(0x40101A + (block[player.selection + 1] << 8), sense)
-        info[:sense] = sense
+        setchannel(player.midi, player.selection, sense=sense)
     elseif player.parameter == 8
         shift = min(max(info[:shift] + value, 40), 88)
-        block = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
-        mididataset1(0x401016 + (block[player.selection + 1] << 8), shift)
-        info[:shift] = shift
+        setchannel(player.midi, player.selection, shift=shift)
     end
 end
 

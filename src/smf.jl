@@ -105,6 +105,9 @@ const parameters = (
     :muted, :channel, :instrument, :variation, :level, :pan,
     :reverb, :chorus, :delay, :sense, :shift)
 
+const block = (
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
+
 firstdrumset = 0
 
 
@@ -660,8 +663,12 @@ function setchannel(smf, channel; info...)
     elseif haskey(info, :sense)
         smf.channel[part][:sense] = info[:sense]
         smf.default[part][:sense] = info[:sense]
-        block = (1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
         mididataset1(0x40101a + block[part] << 8, info[:sense])
+        sleep(0.04)
+    elseif haskey(info, :shift)
+        smf.channel[part][:shift] = info[:shift]
+        smf.default[part][:shift] = info[:shift]
+        mididataset1(0x401016 + block[part] << 8, info[:shift])
         sleep(0.04)
     elseif haskey(info, :delay)
         smf.channel[part][:delay] = info[:delay]
