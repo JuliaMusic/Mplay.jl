@@ -121,6 +121,12 @@ function dispatch(player, key)
         change_mute_state(player, 9)
     elseif key == 'D'
         change_solo_state(player, 9)
+    elseif key == 'm'
+        if player.selection >= 0
+            part = player.selection + 1
+            player.muted[part] = !player.muted[part]
+            change_mute_state(player, player.selection)
+        end
     elseif haskey(MUTE_ON_OFF, key)
         for channel in 0:15
             info = channelinfo(player.midi, channel)
@@ -128,6 +134,10 @@ function dispatch(player, key)
                 player.muted[channel + 1] = !player.muted[channel + 1]
             end
             change_mute_state(player, channel)
+        end
+    elseif key == 's'
+        if player.selection >= 0
+            change_solo_state(player, player.selection)
         end
     elseif haskey(SOLO_ON, key)
         for channel in 0:15
@@ -160,7 +170,7 @@ function dispatch(player, key)
         else
             setsong(player.midi, bar=+1)
         end
-    elseif key == 's'
+    elseif key == 'S'
         savearrangement(player.midi)
     end
 end
