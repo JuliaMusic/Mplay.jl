@@ -104,7 +104,7 @@ function update(player)
         info = channelinfo(player.midi, channel)
         x = 10 + channel * 38
         if info[:used]
-            draw_text(620, 562 - channel * 14, info[:name], color)
+            draw_text(620, 562 - channel * 14, info[:name], player.parameter == 1 ? color : 0)
             if player.muted[channel + 1]
                 copy_pixels(x - 6, 633, 31, 11, 735, 633)
             end
@@ -113,22 +113,22 @@ function update(player)
             end
         end
         paint_knob(x + 9, 581, info[:sense])
-        draw_text(x, 559, lpad(info[:sense], 3), color)
+        draw_text(x, 559, lpad(info[:sense], 3), player.parameter == 7 ? color : 0)
         paint_knob(x + 9, 523, info[:delay])
-        draw_text(x, 501, lpad(info[:delay], 3), color)
+        draw_text(x, 501, lpad(info[:delay], 3), player.parameter == 6 ? color : 0)
         paint_knob(x + 9, 465, info[:chorus])
-        draw_text(x, 443, lpad(info[:chorus], 3), color)
+        draw_text(x, 443, lpad(info[:chorus], 3), player.parameter == 5 ? color : 0)
         paint_knob(x + 9, 407, info[:reverb])
-        draw_text(x, 386, lpad(info[:reverb], 3), color)
+        draw_text(x, 386, lpad(info[:reverb], 3), player.parameter == 4 ? color : 0)
         pan = info[:pan]
         paint_knob(x + 9, 349, pan)
         lr = "L R"[sign(pan - 64) + 2]
-        draw_text(x, 327, string(lr, lpad(abs(pan - 64), 2)), color)
+        draw_text(x, 327, string(lr, lpad(abs(pan - 64), 2)), player.parameter == 3 ? color : 0)
         if info[:used]
             program, variation = getprogram(info[:instrument])
-            draw_text(x, 310, lpad(program, 3), color)
-            draw_text(x - 5, 295, lpad(variation, 2), color)
-            draw_text(x, 204, lpad(info[:level], 3), color)
+            draw_text(x, 310, lpad(program, 3), player.parameter == 1 ? color : 0)
+            draw_text(x - 5, 295, lpad(variation, 2), player.parameter == 1 ? color : 0)
+            draw_text(x, 204, lpad(info[:level], 3), player.parameter == 2 ? color : 0)
             copy_pixels(x + 13, 295, 12, 15, 754, 295)
             level = info[:level]
         else
