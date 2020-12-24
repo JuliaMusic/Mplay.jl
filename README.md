@@ -48,7 +48,7 @@ software synthesizer:
 **Installation:**
 
 ```
-Pkg.clone("https://github.com/JuliaMusic/Mplay.jl")
+Pkg.add(url="https://github.com/JuliaMusic/Mplay.jl")
 ```
 
 On macOS and Windows systems *Mplay* comes as a self-contained
