@@ -30,7 +30,7 @@ const instruments = sc88_instruments
 export instruments
 
 const families = (
-    "Piano", "Chromatic Percussion", "Organ", "Guitar",
+    "Piano", "Chrom Perc", "Organ", "Guitar",
     "Bass", "Strings", "Ensemble", "Brass",
     "Reed", "Pipe", "Synth Lead", "Synth Pad",
     "Synth Effects", "Ethnic", "Percussive", "Sound Effects")
