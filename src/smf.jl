@@ -727,6 +727,7 @@ end
 
 
 function play(smf, device="")
+    global debug
     if smf.start < 0
         midiopen(device)
         mididataset1(0x400130, 0x04)   # Hall 1
@@ -827,7 +828,7 @@ function play(smf, device="")
             elseif me_type == 0x90
                 if byte2 != 0
                     if byte1 in info[:notes]
-                        println("Note retriggered")
+                        if debug println("Note retriggered") end
                     else
                         info[:notes] = [info[:notes]; byte1]
                     end

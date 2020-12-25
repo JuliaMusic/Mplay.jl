@@ -8,6 +8,10 @@ using .keys
 
 export openfiledialog
 
+first = 1
+current = 1
+scrolled = 0
+
 function readindex(path)
     songs = []
     for line in readlines(path)
@@ -20,6 +24,7 @@ function readindex(path)
 end
 
 function openfiledialog(path)
+    global first, current, scrolled
     if isfile(joinpath(path, "index.txt"))
         songs = readindex(joinpath(path, "index.txt"))
     else
@@ -29,10 +34,6 @@ function openfiledialog(path)
     if length(songs) > 0
         settty()
         cls()
-
-        first = 1
-        current = 1
-        scrolled = 0
         while true
             last = first + 23
             for index in first:last
@@ -59,10 +60,8 @@ function openfiledialog(path)
                end
             end
         end
-
         resettty()
         cls()
-
         song = current > 0 ? joinpath(path, lowercase(split(songs[current][2])[end])) : nothing
     else
         song = nothing
