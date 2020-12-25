@@ -1,9 +1,4 @@
 
-const KEY_RIGHT = 262
-const KEY_LEFT  = 263
-const KEY_DOWN  = 264
-const KEY_UP    = 265
-
 const MUTE_ON_OFF = Dict{Char, Any}(
     'b' => ["Bass"], 'g' => ["Guitar"],
     'k' => ["Piano", "Organ", "Strings", "Ensemble"])
@@ -28,9 +23,14 @@ end
 player = nothing
 
 function MidiPlayer(path)
-    smf = readsmf(path)
-    loadarrangement(smf, path)
-    Player(smf, falses(16), falses(16), false, -1, 1, false)
+    if isfile(path)
+        smf = readsmf(path)
+        loadarrangement(smf, path)
+        Player(smf, falses(16), falses(16), false, -1, 1, false)
+    else
+        println("Can't open $path")
+        exit(1)
+    end
 end
 
 function change_mute_state(player, channel)

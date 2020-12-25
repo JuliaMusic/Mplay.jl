@@ -4,12 +4,14 @@ include("GLFW.jl")
 include("OpenGL.jl")
 include("midi.jl")
 include("smf.jl")
+include("keys.jl")
 
 using .GLFW
 
 using .OpenGL
 using .midi
 using .smf
+using .keys
 
 include("player.jl")
 
@@ -313,8 +315,9 @@ export mplay
 
 function main()
     if length(ARGS) > 0
+        path = ARGS[1]
         device = length(ARGS) > 1 ? ARGS[2] : ""
-        mplay(ARGS[1], device)
+        mplay(path, device)
     end
 end
 

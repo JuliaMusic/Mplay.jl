@@ -63,6 +63,7 @@ void resettty(void)
             perror("tcsetattr");
 
         signal(SIGQUIT, saved_handler);
+        saved_handler = NULL;
     }
 #endif
 }

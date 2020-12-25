@@ -5,9 +5,13 @@ using Printf
 include("midi.jl")
 include("smf.jl")
 include("console.jl")
+include("dialog.jl")
+include("keys.jl")
 
 using .smf
 using .console
+using .dialog
+using .keys
 
 const intensities = (
     "        ",
@@ -83,8 +87,21 @@ export mplay
 
 function main()
     if length(ARGS) > 0
+        path = ARGS[1]
         device = length(ARGS) > 1 ? ARGS[2] : ""
-        mplay(ARGS[1], device)
+    else
+        path = "."
+    end
+    if isdir(path)
+        while true
+            file = openfiledialog(path)
+            if file == nothing
+                break
+            end
+            mplay(file, device)
+        end
+    else
+        mplay(path, device)
     end
 end
 

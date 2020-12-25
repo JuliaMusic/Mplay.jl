@@ -1,22 +1,13 @@
 module GLFW
 
+include("keys.jl")
+
+using .keys
+
 const libGLFW = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libglfw.dll" : "lib/libglfw.dylib")
 
 const PRESS = 1
 export PRESS
-
-const KEY_ESCAPE = 256
-export KEY_ESCAPE
-const KEY_TAB = 258
-export KEY_TAB
-const KEY_RIGHT = 262
-export KEY_RIGHT
-const KEY_LEFT = 263
-export KEY_LEFT
-const KEY_DOWN = 264
-export KEY_DOWN
-const KEY_UP = 265
-export KEY_UP
 
 const MOUSE_BUTTON_1 = 0
 export MOUSE_BUTTON_1
