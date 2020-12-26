@@ -101,16 +101,16 @@ end
 
 function update(player)
     copy_pixels(0, 0, 730, 650, 0, 0)
-    for channel in 0:15
-        color = channel != player.selection ? 0 : 2
-        info = channelinfo(player.midi, channel)
-        x = 10 + channel * 38
+    for part in 1:16
+        color = part != player.selection ? 0 : 2
+        info = partinfo(player.midi, part)
+        x = 10 + (part - 1) * 38
         if info[:used]
-            draw_text(620, 562 - channel * 14, info[:name], player.parameter == 1 ? color : 0)
-            if player.muted[channel + 1]
+            draw_text(620, 562 - (part - 1) * 14, info[:name], player.parameter == 1 ? color : 0)
+            if player.muted[part]
                 copy_pixels(x - 6, 633, 31, 11, 735, 633)
             end
-            if player.solo[channel + 1]
+            if player.solo[part]
                 copy_pixels(x - 6, 619, 31, 10, 735, 619)
             end
         end
@@ -201,23 +201,23 @@ function mouse_button_callback(win, button, action, mods)
         return
     elseif 620 < x < 720
         if 76 < y < 300
-            player.selection = div(y - 76, 14)
+            player.selection = div(y - 76, 14) + 1
         end
         return
     elseif x >= 608
         return
     end
-    channel = div(x, 38)
-    info = channelinfo(player.midi, channel)
+    part = div(x, 38) + 1
+    info = partinfo(player.midi, part)
     if info[:used]
         if player.button
             if 6 < y < 18
-                player.muted[channel + 1] = !player.muted[channel + 1]
-                change_mute_state(player, channel)
+                player.muted[part] = !player.muted[part]
+                change_mute_state(player, part)
             elseif 20 < y < 32
-                change_solo_state(player, channel)
+                change_solo_state(player, part)
             else
-                player.selection = channel
+                player.selection = part
             end
         end
     end
@@ -228,7 +228,7 @@ function cursor_pos_callback(_, x, y)
     if x >= 608
         return
     end
-    channel = div(x, 38)
+    part = div(x, 38) + 1
     if player.button
         if 34 <= y < 34 + 5 * 58
             y -= 34
@@ -236,28 +236,21 @@ function cursor_pos_callback(_, x, y)
             value = trunc(Int, min(max(value, 0), 127))
             knob = div(y, 58)
             if knob == 0
-                setchannel(player.midi, channel, sense=value)
+                setpart(player.midi, part, sense=value)
             elseif knob == 1
-                setchannel(player.midi, channel, delay=value)
+                setpart(player.midi, part, delay=value)
             elseif knob == 2
-                setchannel(player.midi, channel, chorus=value)
+                setpart(player.midi, part, chorus=value)
             elseif knob == 3
-                setchannel(player.midi, channel, reverb=value)
+                setpart(player.midi, part, reverb=value)
             elseif knob == 4
-                setchannel(player.midi, channel, pan=value)
+                setpart(player.midi, part, pan=value)
             end
         elseif 358 < y < 430
             value = trunc(Int, min(max((425 - y) * 2, 0), 127))
-            setchannel(player.midi, channel, level=value)
+            setpart(player.midi, part, level=value)
         end
     end
-end
-
-function change_instrument(player, value)
-    if player.selection
-        setchannel(player.midi, player.selection, instrument=value)
-    end
-    return 0
 end
 
 function mplay(path, device="")

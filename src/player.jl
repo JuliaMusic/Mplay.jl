@@ -26,59 +26,65 @@ function MidiPlayer(path)
     if isfile(path)
         smf = readsmf(path)
         loadarrangement(smf, path)
-        Player(smf, falses(16), falses(16), false, -1, 1, false)
+        Player(smf, falses(16), falses(16), false, 0, 1, false)
     else
         println("Can't open $path")
         exit(1)
     end
 end
 
-function change_mute_state(player, channel)
-    setchannel(player.midi, channel, muted=player.muted[channel + 1])
+function change_mute_state(player, part)
+    state = player.muted[part]
+    if state
+        player.solo[part] = false
+        allnotesoff(player.midi, part)
+    end
+    setpart(player.midi, part, muted=state)
 end
 
-function change_solo_state(player, channel)
-    player.solo[channel + 1] = !player.solo[channel + 1]
-    if player.solo[channel + 1]
-        setchannel(player.midi, channel, solo=player.solo[channel + 1])
-        for ch in 0:15
-            player.muted[ch + 1] = ch != channel ? true : false
-            player.solo[ch + 1] = ch == channel ? true : false
-        end
-    else
-        for ch in 0:15
-            player.muted[ch + 1] = false
-            setchannel(player.midi, ch, muted=false)
+function change_solo_state(player, part)
+    player.solo[part] = !player.solo[part]
+    player.muted[part] = false
+    setpart(player.midi, part, muted=false)
+    state = player.solo[part]
+    for other in 1:16
+        if other != part
+            player.solo[other] = false
+            player.muted[other] = state
+            if state
+                allnotesoff(player.midi, other)
+            end
+            setpart(player.midi, other, muted=state)
         end
     end
 end
 
 function controlchange(player, value)
-    info = channelinfo(player.midi, player.selection)
+    info = partinfo(player.midi, player.selection)
     if player.parameter == 1
         instrument = min(max(info[:instrument] + value, 1), length(instruments))
-        setchannel(player.midi, player.selection, instrument=instrument)
+        setpart(player.midi, player.selection, instrument=instrument)
     elseif player.parameter == 2
         level = min(max(info[:level] + value, 0), 127)
-        setchannel(player.midi, player.selection, level=level)
+        setpart(player.midi, player.selection, level=level)
     elseif player.parameter == 3
         pan = min(max(info[:pan] + value, 0), 127)
-        setchannel(player.midi, player.selection, pan=pan)
+        setpart(player.midi, player.selection, pan=pan)
     elseif player.parameter == 4
         reverb = min(max(info[:reverb] + value, 0), 127)
-        setchannel(player.midi, player.selection, reverb=reverb)
+        setpart(player.midi, player.selection, reverb=reverb)
     elseif player.parameter == 5
         chorus = min(max(info[:chorus] + value, 0), 127)
-        setchannel(player.midi, player.selection, chorus=chorus)
+        setpart(player.midi, player.selection, chorus=chorus)
     elseif player.parameter == 6
         delay = min(max(info[:delay] + value, 0), 127)
-        setchannel(player.midi, player.selection, delay=delay)
+        setpart(player.midi, player.selection, delay=delay)
     elseif player.parameter == 7
         sense = min(max(info[:sense] + value, 0), 127)
-        setchannel(player.midi, player.selection, sense=sense)
+        setpart(player.midi, player.selection, sense=sense)
     elseif player.parameter == 8
         shift = min(max(info[:shift] + value, 40), 88)
-        setchannel(player.midi, player.selection, shift=shift)
+        setpart(player.midi, player.selection, shift=shift)
     end
 end
 
@@ -87,68 +93,63 @@ function dispatch(player, key)
         setsong(player.midi, action=:exit)
         exit(0)
     elseif key == '\r'
-        player.selection = -1
+        player.selection = 0
     elseif key == '\t'
         if player.parameter < length(parameters) player.parameter += 1 else player.parameter = 1 end
     elseif key == Char(KEY_DOWN)
-        if player.selection < 15 player.selection += 1 else player.selection = 0 end
-        info = channelinfo(player.midi, player.selection)
+        if player.selection < 16 player.selection += 1 else player.selection = 1 end
+        info = partinfo(player.midi, player.selection)
         while !info[:used]
-            if player.selection < 15 player.selection += 1 else player.selection = 0 end
-            info = channelinfo(player.midi, player.selection)
+            if player.selection < 16 player.selection += 1 else player.selection = 1 end
+            info = partinfo(player.midi, player.selection)
         end
     elseif key == Char(KEY_UP)
-        if player.selection > 0 player.selection -= 1 else player.selection = 15 end
-        info = channelinfo(player.midi, player.selection)
+        if player.selection > 1 player.selection -= 1 else player.selection = 16 end
+        info = partinfo(player.midi, player.selection)
         while !info[:used]
-            if player.selection > 0 player.selection -= 1 else player.selection = 15 end
-            info = channelinfo(player.midi, player.selection)
+            if player.selection > 1 player.selection -= 1 else player.selection = 16 end
+            info = partinfo(player.midi, player.selection)
         end
     elseif key == ' '
         setsong(player.midi, action=:pause)
         player.pause = !player.pause
-    elseif key in "1234567890!@#\$%^"
-        channel = findfirst(isequal(key), "1234567890!@#\$%^") - 1
-        player.muted[channel + 1] = !player.muted[channel + 1]
-        change_mute_state(player, channel)
+    elseif key ∈ "1234567890!@#\$%^"
+        part = findfirst(isequal(key), "1234567890!@#\$%^")
+        player.muted[part] = !player.muted[part]
+        change_mute_state(player, part)
     elseif key == 'a'
-        for channel in 0:15
-            player.muted[channel + 1] = player.solo[channel + 1] = false
-            change_mute_state(player, channel)
+        for part in 1:16
+            player.muted[part] = player.solo[part] = false
+            change_mute_state(player, part)
         end
     elseif key == 'd'
         player.muted[10] = !player.muted[10]
-        change_mute_state(player, 9)
+        change_mute_state(player, 10)
     elseif key == 'D'
-        change_solo_state(player, 9)
+        change_solo_state(player, 10)
     elseif key == 'm'
-        if player.selection >= 0
-            part = player.selection + 1
+        if player.selection > 0
+            part = player.selection
             player.muted[part] = !player.muted[part]
             change_mute_state(player, player.selection)
         end
     elseif haskey(MUTE_ON_OFF, key)
-        for channel in 0:15
-            info = channelinfo(player.midi, channel)
-            if channel != 9 && info[:family] in MUTE_ON_OFF[key]
-                player.muted[channel + 1] = !player.muted[channel + 1]
+        for part in 1:16
+            info = partinfo(player.midi, part)
+            if info[:family] ∈ MUTE_ON_OFF[key]
+                player.muted[part] = !player.muted[part]
+            change_mute_state(player, part)
             end
-            change_mute_state(player, channel)
         end
     elseif key == 's'
-        if player.selection >= 0
+        if player.selection > 0
             change_solo_state(player, player.selection)
         end
     elseif haskey(SOLO_ON, key)
-        for channel in 0:15
-            info = channelinfo(player.midi, channel)
-            if channel != 9 && info[:family] in SOLO_ON[key]
-                player.muted[channel + 1] = false
-            else
-                player.muted[channel + 1] = true
-                player.solo[channel + 1] = false
-            end
-            change_mute_state(player, channel)
+        for part in 1:16
+            info = partinfo(player.midi, part)
+            player.muted[part] = info[:family] ∉ SOLO_ON[key]
+            change_mute_state(player, part)
         end
     elseif key == '<'
         setsong(player.midi, shift=-1)
@@ -159,13 +160,13 @@ function dispatch(player, key)
     elseif key == '+'
         setsong(player.midi, bpm=+1)
     elseif key == ',' || key == Char(KEY_LEFT)
-        if player.selection >= 0
+        if player.selection > 0
             controlchange(player, -1)
         else
             setsong(player.midi, bar=-1)
         end
     elseif key == '.' || key == Char(KEY_RIGHT)
-        if player.selection >= 0
+        if player.selection > 0
             controlchange(player, +1)
         else
             setsong(player.midi, bar=+1)
