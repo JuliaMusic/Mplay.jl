@@ -138,7 +138,7 @@ DLLEXPORT void midiopen(char *device)
         fatal("cannot create MIDI input port");
 
       if ((src = MIDIGetSource(atoi(device))) == 0)
-        printf("cannot get MIDI source\n");
+        fprintf(stderr, "cannot get MIDI source\n");
       else
         {
           if (MIDIPortConnectSource(input_port, src, conRef) != noErr)
@@ -154,6 +154,13 @@ home:
 #endif
 }
 
+#ifdef __APPLE__
+void completionProc(MIDISysexSendRequest *request)
+{
+  assert(request->complete == true);
+}
+#endif
+
 DLLEXPORT void midiwrite(unsigned char *buffer, int nbytes)
 {
 #ifdef __APPLE__
@@ -168,17 +175,36 @@ DLLEXPORT void midiwrite(unsigned char *buffer, int nbytes)
           inOffsetSampleFrame = 0;
           MusicDeviceMIDIEvent(synthUnit, inStatus, inData1, inData2, inOffsetSampleFrame);
         }
+      else
+        {
+          MusicDeviceSysEx(synthUnit, buffer, nbytes);
+        }
     }
   else
     {
-      static Byte midi_buffer[1024];
-      MIDIPacketList *pktlist = (MIDIPacketList *) midi_buffer;
-      MIDIPacket *packet;
-      packet = MIDIPacketListInit(pktlist);
-      packet = MIDIPacketListAdd(pktlist, sizeof(midi_buffer), packet,
-                                 AudioGetCurrentHostTime(), nbytes, buffer);
-      if (MIDISend(output_port, dest, pktlist) != noErr)
-        fatal("cannot send MIDI packet\n");
+      if (nbytes <= 3)
+        {
+          static Byte midi_buffer[1024];
+          MIDIPacketList *pktlist = (MIDIPacketList *) midi_buffer;
+          MIDIPacket *packet;
+          packet = MIDIPacketListInit(pktlist);
+          packet = MIDIPacketListAdd(pktlist, sizeof(midi_buffer), packet,
+                                     AudioGetCurrentHostTime(), nbytes, buffer);
+          if (MIDISend(output_port, dest, pktlist) != noErr)
+            fatal("cannot send MIDI packet\n");
+        }
+      else
+        {
+          static MIDISysexSendRequest request;
+          request.destination = dest;
+          request.data = buffer;
+          request.bytesToSend = nbytes;
+          request.complete = false;
+          request.completionProc = completionProc;
+          request.completionRefCon = NULL;
+          if (MIDISendSysex(&request) != noErr)
+            fatal("cannot send MIDI SysEx message");
+        }
     }
 #endif
 #ifdef _WIN32
