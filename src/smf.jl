@@ -656,6 +656,7 @@ function setpart(smf, part; info...)
         mididataset1(0x40101a + block[part] << 8, info[:sense])
         sleep(0.04)
     elseif haskey(info, :shift)
+        allnotesoff(smf, part)
         smf.channel[part][:shift] = info[:shift]
         smf.default[part][:shift] = info[:shift]
         mididataset1(0x401016 + block[part] << 8, info[:shift])
