@@ -124,20 +124,32 @@ DLLEXPORT void midiopen(char *device)
     }
   else
     {
+      int index;
+      char name[255];
+      CFStringRef displayName;
       void *conRef = NULL;
+
+      if (*device != '\0')
+        index = atoi(device);
+      else
+        index = MIDIGetNumberOfDestinations() - 1;
 
       if (MIDIClientCreate(CFSTR("Mplay"), NULL, NULL, &client) != noErr)
         fatal("cannot create MIDI client");
 
       if (MIDIOutputPortCreate(client, CFSTR("Output port"), &output_port) != noErr)
         fatal("cannot create MIDI output port");
-      if ((dest = MIDIGetDestination(atoi(device))) == 0)
+      if ((dest = MIDIGetDestination(index)) == 0)
         fatal("cannot get MIDI destination");
+
+      MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+      CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+      printf("MIDI destination:  %s\n", name);
 
       if (MIDIInputPortCreate(client, CFSTR("Input port"), readProc, NULL, &input_port) != noErr)
         fatal("cannot create MIDI input port");
 
-      if ((src = MIDIGetSource(atoi(device))) == 0)
+      if ((src = MIDIGetSource(index)) == 0)
         fprintf(stderr, "cannot get MIDI source\n");
       else
         {
