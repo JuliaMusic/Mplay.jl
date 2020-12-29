@@ -140,7 +140,6 @@ function getprogram(instrument)
 end
 
 
-
 function printable(chars)
     result = ""
     for b in chars
@@ -573,6 +572,13 @@ function allnotesoff(smf, part)
 end
 
 
+function allsoundoff(smf)
+    for channel in 0:15
+        writemidi(smf, [0xb0 + channel, 0x78, 0])
+    end
+end
+
+
 function songposition(smf, beat)
     smf.next = 1
     for ev in smf.ev
@@ -615,6 +621,7 @@ function setsong(smf; info...)
             for part = 1:16
                 allnotesoff(smf, part)
             end
+            allsoundoff(smf)
             midiclose()
         elseif info[:action] == :pause
             if smf.pause == 0
@@ -807,7 +814,7 @@ function play(smf, device="")
             info = smf.channel[part]
             info[:used] = true
             default = smf.default[part]
-            if me_type ∈ (0x80, 0x90) && channel != 9
+            if me_type ∈ (0x80, 0x90) && info[:channel] != 9
                 byte1 += smf.key_shift
             end
             if me_type == 0x80
