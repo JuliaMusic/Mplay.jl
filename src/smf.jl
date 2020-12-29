@@ -779,7 +779,7 @@ function play(smf, device="")
                     smf.line = ""
                 else
                     if data[end] ∈ (13, 10)
-                        smf.text = smf.line * printable(data[:end])
+                        smf.text = smf.line * printable(data[1:end-1])
                         smf.line = ""
                     else
                         smf.line *= printable(data)
