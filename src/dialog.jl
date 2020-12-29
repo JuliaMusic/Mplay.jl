@@ -35,7 +35,7 @@ function openfiledialog(path)
         settty()
         cls()
         while true
-            last = first + 23
+            last = first + min(23, length(songs) - 1)
             for index in first:last
                 outtextxy(1, index - scrolled, rpad(songs[index][1], 80))
             end
