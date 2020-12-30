@@ -27,6 +27,17 @@ const intensities = (
 
 include("player.jl")
 
+function showlyrics(smf)
+    line = smf.column == 0 ? smf.line : smf.line + 1
+    if 1 <= line <= length(smf.lyrics)
+        outtextxy(1, 22, rpad(smf.lyrics[line], 80))
+        if smf.column > 0
+            outtextxy(smf.column > 1 ? smf.column - length(smf.text) + 1 : smf.column, 22, smf.text, 2)
+        end
+        outtextxy(1, 23, rpad(line < length(smf.lyrics) ? smf.lyrics[line + 1] : "", 80))
+    end
+end
+
 function update(player, smf)
     outtextxy(1, 1, fileinfo(smf))
     outtextxy(1, 2, songinfo(smf))
@@ -49,7 +60,7 @@ function update(player, smf)
     beat = beatinfo(smf) % 4
     s = rpad(string(repeat(" ", beat*20), repeat("█", 20)), 80)
     outtextxy(1, 21, s)
-    outtextxy(1, 22, lyrics(smf))
+    showlyrics(smf)
     chord, notes = chordinfo(smf)
     outtextxy(1, 24, chord)
 end

@@ -5,7 +5,7 @@ using Printf
 using ..midi
 
 export readsmf, loadarrangement, savearrangement, play,
-       fileinfo, songinfo, beatinfo, lyrics, chordinfo, getprogram,
+       fileinfo, songinfo, beatinfo, chordinfo, getprogram,
        setsong, partinfo, setpart, allnotesoff, cpuload
 export midi
 
@@ -164,6 +164,7 @@ mutable struct SMF
     mf::Array{UInt8}
     off::Int
     ev::Array{Array{Any}}
+    lyrics::Array{Any}
     status::UInt8
     midi_clock::Int
     next::Int
@@ -175,8 +176,9 @@ mutable struct SMF
     division::Int
     bpm::Int
     playing_time::Float64
-    line::String
     text::String
+    line::Int
+    column::Int
     chord::String
     notes::Array{Any}
     tempo::Int
@@ -196,8 +198,8 @@ function StandardMidiFile()
     ev = Array{Array{Any}}(undef,0)
     channel = Array{Any}(undef,16)
     default = Array{Any}(undef,16)
-    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, 0x00, 0, 1,
-              0, -1, 0, 0, 0, 384, 120, 0, "", "", "", [], div(60000000,120),
+    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, [], 0x00, 0, 1,
+              0, -1, 0, 0, 0, 384, 120, 0, "", 0, 1, "", [], div(60000000,120),
               4, 4, 24, 8, 8, 0, 2, channel, default)
     for part in 1:16
         smf.channel[part] = Dict(:used => false,
@@ -393,6 +395,29 @@ function readevents(smf)
 end
 
 
+function collectlyrics(smf)
+    lyrics = []
+    line = ""
+    for ev in smf.ev[1:end]
+        at, message, me_type, data = ev
+        if message == 0xff && me_type == 0x05
+            if data[1] ∈ (13, 10)
+               push!(lyrics, line)
+               line = ""
+            else
+                if data[end] ∈ (13, 10)
+                    push!(lyrics, line * printable(data[1:end-1]))
+                    line = ""
+                else
+                    line *= printable(data)
+                end
+            end
+        end
+    end
+    lyrics
+end
+
+
 function readsmf(path)
     global debug
     debug = haskey(ENV, "DEBUG")
@@ -418,6 +443,8 @@ function readsmf(path)
     end
 
     smf.ev = sort(smf.ev[1:end], by=x->x[1])
+
+    smf.lyrics = collectlyrics(smf)
 
     smf.playing_time = 0
     at = start = 0
@@ -502,11 +529,6 @@ function beatinfo(smf)
         now = (time() - smf.elapsed_time) * 1000
     end
     trunc(Int, now * 1000 / smf.tempo)
-end
-
-
-function lyrics(smf)
-    rpad(smf.text, 80)
 end
 
 
@@ -728,8 +750,6 @@ function play(smf, device="")
         mididataset1(0x400130, 0x04)   # Hall 1
         mididataset1(0x40007f, 0x00)   # GS Reset
         sleep(0.04)
-        smf.start = time()
-        writemidi(smf, UInt8[0xfc, 0xfa])
         for part in 1:16
             arr = smf.default[part]
             if arr[:instrument] != -1 && arr[:variation] != -1
@@ -742,8 +762,10 @@ function play(smf, device="")
             if arr[:chorus] != -1 setpart(smf, part, chorus=arr[:chorus]) end
             if arr[:delay] != -1 setpart(smf, part, delay=arr[:delay]) end
         end
+        smf.start = time()
+        writemidi(smf, UInt8[0xfc, 0xfa])
         smf.elapsed_time = smf.start
-        smf.line = ""
+        smf.line = 0
     end
     if smf.pause != 0
         return 0.04
@@ -773,14 +795,16 @@ function play(smf, device="")
             at, message, me_type, data = ev
             if me_type == 0x05
                 if data[1] ∈ (13, 10)
-                    smf.line = ""
+                    smf.line += 1
+                    smf.column = 0
                 else
                     if data[end] ∈ (13, 10)
-                        smf.text = smf.line * printable(data[1:end-1])
-                        smf.line = ""
+                        smf.text = printable(data[1:end-1])
+                        smf.line += 1
+                        smf.column = 1
                     else
-                        smf.line *= printable(data)
-                        smf.text = smf.line
+                        smf.text = printable(data)
+                        smf.column += length(smf.text)
                     end
                 end
             elseif me_type == 0x51

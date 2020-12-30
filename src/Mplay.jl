@@ -99,6 +99,18 @@ function paint_notes(notes)
     end
 end
 
+function showlyrics(smf)
+    line = smf.column == 0 ? smf.line : smf.line + 1
+    if 1 <= line <= length(smf.lyrics)
+        draw_text(15, 147, rpad(smf.lyrics[line], 80), 1)
+        if smf.column > 0
+            column = smf.column > 1 ? smf.column - length(smf.text) + 1 : smf.column
+            draw_text(15 + (column - 1) * 7, 147, rstrip(smf.text), 2)
+        end
+        draw_text(15, 132, rpad(line < length(smf.lyrics) ? smf.lyrics[line + 1] : "", 80), 1)
+    end
+end
+
 function update(player)
     copy_pixels(0, 0, 730, 650, 0, 0)
     for part in 1:16
@@ -143,9 +155,9 @@ function update(player)
 
     draw_text(15, 177, fileinfo(player.midi))
     draw_text(15, 162, songinfo(player.midi))
-    draw_text(15, 142, lyrics(player.midi), 1)
+    showlyrics(player.midi)
     chord, notes = chordinfo(player.midi)
-    draw_text(15, 120, chord)
+    draw_text(15, 117, chord)
     paint_notes(notes)
     text = "Julia MIDI Player  @ 2018-2020 by Josef Heinen"
     scrolling_text = " " ^ 12 * text * " "
