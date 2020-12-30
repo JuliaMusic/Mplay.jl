@@ -41,7 +41,7 @@ function update(player, smf)
             program, variation = getprogram(info[:instrument])
             pan = string(info[:pan] < 64 ? "L" : info[:pan] > 64 ? "R" : " ", abs(info[:pan] - 64))
             state = info[:muted] ? "x" : " "
-            s = @sprintf "%-2d%s%-8s %15s: %-12s %2d %3d %3d %3d %3s %3d %3d %3d %3d %3d" part state intensities[div(info[:intensity],15)+1] info[:family] info[:name] info[:channel] program variation info[:level] pan info[:reverb] info[:chorus] info[:delay] info[:sense] info[:shift]-64;
+            s = @sprintf "%-2d%s%-8s %15s: %-12s %2d %3d %3d %3d %3s %3d %3d %3d %3d %3d" part state intensities[div(info[:intensity],15)+1] info[:family] info[:name] info[:channel] program+1 variation info[:level] pan info[:reverb] info[:chorus] info[:delay] info[:sense] info[:shift]-64;
             outtextxy(1, part + 4, s, player.selection == part ? 2 : 0)
         end
     end
