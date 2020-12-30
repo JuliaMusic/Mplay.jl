@@ -747,8 +747,9 @@ function play(smf, device="")
     global debug
     if smf.start < 0
         midiopen(device)
-        mididataset1(0x400130, 0x04)   # Hall 1
         mididataset1(0x40007f, 0x00)   # GS Reset
+        sleep(0.04)
+        mididataset1(0x400130, 0x04)   # Hall 1
         sleep(0.04)
         for part in 1:16
             arr = smf.default[part]
