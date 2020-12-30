@@ -28,7 +28,7 @@ function openfiledialog(path)
     if isfile(joinpath(path, "index.txt"))
         songs = readindex(joinpath(path, "index.txt"))
     else
-        files = filter(x->endswith(x, ".mid"), readdir(path))
+        files = filter(x->endswith(lowercase(x), ".mid"), readdir(path))
         songs = zip(files, files) |> collect
     end
     if length(songs) > 0
