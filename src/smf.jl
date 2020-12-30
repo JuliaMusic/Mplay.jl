@@ -22,7 +22,7 @@ end
 debug = false
 warnings = false
 
-const gm1 = true
+const gm1 = false
 
 include("instruments.jl")
 
@@ -164,7 +164,7 @@ mutable struct SMF
     mf::Array{UInt8}
     off::Int
     ev::Array{Array{Any}}
-    status::Int
+    status::UInt8
     midi_clock::Int
     next::Int
     at::Float64
@@ -196,7 +196,7 @@ function StandardMidiFile()
     ev = Array{Array{Any}}(undef,0)
     channel = Array{Any}(undef,16)
     default = Array{Any}(undef,16)
-    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, 0, 0, 1,
+    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, 0x00, 0, 1,
               0, -1, 0, 0, 0, 384, 120, 0, "", "", "", [], div(60000000,120),
               4, 4, 24, 8, 8, 0, 2, channel, default)
     for part in 1:16
@@ -237,7 +237,7 @@ function bytes(smf, n)
     smf.mf[smf.off : smf.off + n - 1]
 end
 
-function extractbyte(smf)
+function extractbyte(smf)::UInt8
     value = smf.mf[smf.off]
     smf.off += 1
     value
@@ -342,7 +342,7 @@ function readevents(smf)
             else
                 smf.off += num_bytes
                 if debug
-                    println(dec(at, 6), " Meta Event 0xi", hex(me_type, 2),
+                    println(dec(at, 6), " Meta Event 0x", hex(me_type, 2),
                             " ($num_bytes bytes)")
                 end
             end
@@ -367,7 +367,11 @@ function readevents(smf)
                             s = " (" * notes[byte1 % 12 + 1] *
                                 string(div(byte1, 12)) * ")"
                         else
-                            s = " (" * drum_instruments[byte1 + 1] * ")"
+                            if drum_instruments[byte1 + 1] != ""
+                                s = " (" * drum_instruments[byte1 + 1] * ")"
+                            else
+                                s = ""
+                            end
                         end
                     else
                         s = ""
@@ -541,20 +545,12 @@ function chordinfo(smf)
 end
 
 
-function writemidi(smf, buf)
+function writemidi(smf, buf::Array{UInt8})
     global debug
-    start = 1
-    if !gm1 && buf[1] < 0xf0
-        if buf[1] == smf.status
-            start += 1
-        else
-            smf.status = buf[1]
-        end
-    end
-    midiwrite(buf[start:end])
+    midiwrite(buf)
     if debug
         s = sep = ""
-        for byte in buf[start:end]
+        for byte in buf
             s *= sep * "0x" * hex(byte, 2)
             sep = " "
         end
@@ -566,7 +562,7 @@ end
 function allnotesoff(smf, part)
     channel = smf.channel[part][:channel]
     for note ∈ smf.channel[part][:notes]
-        writemidi(smf, [0x80 + channel, note, 0])
+        writemidi(smf, UInt8[0x80 + channel, note, 0])
     end
     smf.channel[part][:notes] = []
 end
@@ -574,7 +570,8 @@ end
 
 function allsoundoff(smf)
     for channel in 0:15
-        writemidi(smf, [0xb0 + channel, 0x78, 0])
+        writemidi(smf, UInt8[0xb0 + channel, 0x79, 0x00]) # Reset all controllers
+        writemidi(smf, UInt8[0xb0 + channel, 0x7b, 0x00]) # All notes off
     end
 end
 
@@ -626,14 +623,14 @@ function setsong(smf; info...)
         elseif info[:action] == :pause
             if smf.pause == 0
                 smf.pause = time()
-                writemidi(smf, [0xfc])
+                writemidi(smf, UInt8[0xfc])
                 for part = 1:16
                     allnotesoff(smf, part)
                 end
             else
                 smf.elapsed_time += time() - smf.pause
                 smf.pause = 0
-                writemidi(smf, [0xfb])
+                writemidi(smf, UInt8[0xfb])
             end
         end
     end
@@ -656,7 +653,7 @@ function setpart(smf, part; info...)
     elseif haskey(info, :level)
         smf.channel[part][:level] = info[:level]
         smf.default[part][:level] = info[:level]
-        writemidi(smf, [0xb0 + channel, 7, info[:level]])
+        writemidi(smf, UInt8[0xb0 + channel, 7, info[:level]])
     elseif haskey(info, :sense)
         smf.channel[part][:sense] = info[:sense]
         smf.default[part][:sense] = info[:sense]
@@ -671,26 +668,26 @@ function setpart(smf, part; info...)
     elseif haskey(info, :delay)
         smf.channel[part][:delay] = info[:delay]
         smf.default[part][:delay] = info[:delay]
-        writemidi(smf, [0xb0 + channel, 94, info[:delay]])
+        writemidi(smf, UInt8[0xb0 + channel, 94, info[:delay]])
     elseif haskey(info, :chorus)
         smf.channel[part][:chorus] = info[:chorus]
         smf.default[part][:chorus] = info[:chorus]
-        writemidi(smf, [0xb0 + channel, 93, info[:chorus]])
+        writemidi(smf, UInt8[0xb0 + channel, 93, info[:chorus]])
     elseif haskey(info, :reverb)
         smf.channel[part][:reverb] = info[:reverb]
         smf.default[part][:reverb] = info[:reverb]
-        writemidi(smf, [0xb0 + channel, 91, info[:reverb]])
+        writemidi(smf, UInt8[0xb0 + channel, 91, info[:reverb]])
     elseif haskey(info, :pan)
         smf.channel[part][:pan] = info[:pan]
         smf.default[part][:pan] = info[:pan]
-        writemidi(smf, [0xb0 + channel, 10, info[:pan]])
+        writemidi(smf, UInt8[0xb0 + channel, 10, info[:pan]])
     elseif haskey(info, :instrument)
         name, program, variation = instruments[info[:instrument]]
         smf.channel[part][:instrument] = info[:instrument]
         smf.channel[part][:name] = name
-        writemidi(smf, [0xb0 + channel, 0x20, 0x02])
-        writemidi(smf, [0xb0 + channel, 0x00, variation])
-        writemidi(smf, [0xc0 + channel, program])
+        writemidi(smf, UInt8[0xb0 + channel, 0x20, gm1 ? 0x00 : 0x02]) # 0=default, 1=SC-55, 2=SC-88
+        writemidi(smf, UInt8[0xb0 + channel, 0x00, variation])
+        writemidi(smf, UInt8[0xc0 + channel, program])
         smf.default[part][:instrument] = program
         smf.default[part][:variation] = variation
     end
@@ -699,7 +696,7 @@ end
 
 function timing(smf, at)
     if at >= smf.midi_clock
-        writemidi(smf, [0xf8])
+        writemidi(smf, UInt8[0xf8])
         smf.midi_clock += div(smf.division, 24)
     end
 end
@@ -732,7 +729,7 @@ function play(smf, device="")
         mididataset1(0x40007f, 0x00)   # GS Reset
         sleep(0.04)
         smf.start = time()
-        writemidi(smf, [0xfc, 0xfa])
+        writemidi(smf, UInt8[0xfc, 0xfa])
         for part in 1:16
             arr = smf.default[part]
             if arr[:instrument] != -1 && arr[:variation] != -1
@@ -839,9 +836,11 @@ function play(smf, device="")
             elseif me_type == 0xb0
                 if byte1 == 0
                     default[:variation] != -1 && (byte2 = default[:variation])
+                    program = info[:instrument]
+                    getinstrument(part, program, byte2) == program && (byte2 = 0)
                     info[:variation] = byte2
                 elseif byte1 == 32
-                    byte2 = 2
+                    byte2 = gm1 ? 0 : 2 # 0=default, 1=SC-55, 2=SC-88
                 elseif byte1 == 7
                     default[:level] != -1 && (byte2 = default[:level])
                     info[:level] = byte2
@@ -868,15 +867,15 @@ function play(smf, device="")
             end
             if !info[:muted] && default[:muted] ∈ (-1, 0)
                 if me_type != 0xc0
-                    writemidi(smf, [message, byte1, byte2])
+                    writemidi(smf, UInt8[message, byte1, byte2])
                 else
-                    writemidi(smf, [message, byte1])
+                    writemidi(smf, UInt8[message, byte1])
                 end
             end
         end
         smf.next += 1
     end
-    writemidi(smf, [0xfc])
+    writemidi(smf, UInt8[0xfc])
     return 0
 end
 
