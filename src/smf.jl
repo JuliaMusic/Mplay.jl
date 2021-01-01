@@ -4,10 +4,12 @@ using Printf
 
 using ..midi
 
-export readsmf, loadarrangement, savearrangement, play,
+export setopts, readsmf, loadarrangement, savearrangement, play,
        fileinfo, songinfo, beatinfo, chordinfo, getprogram,
        setsong, partinfo, setpart, allnotesoff, cpuload
 export midi
+
+include("korg.jl")
 
 oct(n) = string(n, base=8)
 
@@ -21,6 +23,7 @@ end
 
 debug = false
 warnings = false
+soft_shift = true
 
 const gm1 = false
 
@@ -273,7 +276,7 @@ function extractnumber(smf)
 end
 
 function readevents(smf)
-    global debug
+    global debug, korg, drum_channel
     state = 0
     chan = 0
     at = 0
@@ -363,6 +366,9 @@ function readevents(smf)
                     byte2 = 0
                 end
                 push!(smf.ev, [at, message, byte1, byte2])
+                if korg && state == 4 && byte1 == 9
+                    drum_channel = chan
+                end
                 if debug
                     if state ∈ (0, 1)
                         if chan != 9
@@ -378,7 +384,7 @@ function readevents(smf)
                     else
                         s = ""
                     end
-                    if state ∈ (0, 1, 2, 3, 6)
+                    if state ∈ (0, 1, 2, 3, 4, 6)
                         println(dec(at, 6), " ", messages[state + 1],
                                 " 0x", hex(chan, 2), " 0x", hex(byte1, 2),
                                 " 0x", hex(byte2, 2), s)
@@ -415,6 +421,17 @@ function collectlyrics(smf)
         end
     end
     lyrics
+end
+
+
+function setopts(opts)
+    global korg, drumkit, bank
+    korg = "-korg" ∈ opts
+    if korg
+        drumkit = zeros(Int, 16)
+        bank = zeros(Int, 16)
+        drum_channel = 9
+    end
 end
 
 
@@ -744,13 +761,17 @@ end
 
 
 function play(smf, device="")
-    global debug
+    global debug, korg, drum_channel, drumkit, bank
     if smf.start < 0
         midiopen(device)
         mididataset1(0x40007f, 0x00)   # GS Reset
         sleep(0.04)
         mididataset1(0x400130, 0x04)   # Hall 1
         sleep(0.04)
+        if korg
+            smf.channel[10][:channel] = drum_channel
+            smf.channel[drum_channel + 1][:channel] = 9
+        end
         for part in 1:16
             arr = smf.default[part]
             if arr[:instrument] != -1 && arr[:variation] != -1
@@ -836,8 +857,25 @@ function play(smf, device="")
             info = smf.channel[part]
             info[:used] = true
             default = smf.default[part]
-            if me_type ∈ (0x80, 0x90) && info[:channel] != 9
-                byte1 += smf.key_shift
+            if me_type ∈ (0x80, 0x90)
+                if korg && info[:channel] == 9
+                    if 35 < byte1 < 96
+                        byte1 = korg_drumset[drumkit[part] + 1][byte1 - 35]
+                    else
+                        byte1 = 0
+                    end
+                    if byte1 == 0
+                        smf.next += 1
+                        continue
+                    end
+                    message = me_type | 0x09
+                end
+                if info[:channel] != 9
+                    byte1 += smf.key_shift
+                    if soft_shift
+                        byte1 += info[:shift] - 64
+                    end
+                end
             end
             if me_type == 0x80
                 if byte1 in info[:notes]
@@ -861,11 +899,14 @@ function play(smf, device="")
             elseif me_type == 0xb0
                 if byte1 == 0
                     default[:variation] != -1 && (byte2 = default[:variation])
-                    program = info[:instrument]
+                    program = instruments[info[:instrument]][2]
                     getinstrument(part, program, byte2) == program && (byte2 = 0)
+                    bank[part] = 0
                     info[:variation] = byte2
+                    info[:family] = families[div(program, 8) + 1]
                 elseif byte1 == 32
-                    byte2 = gm1 ? 0 : 2 # 0=default, 1=SC-55, 2=SC-88
+                    bank[part] |= byte2
+                    byte2 = !gm1 ? 0 : 2 # 0=default, 1=SC-55, 2=SC-88
                 elseif byte1 == 7
                     default[:level] != -1 && (byte2 = default[:level])
                     info[:level] = byte2
@@ -883,14 +924,42 @@ function play(smf, device="")
                     info[:delay] = byte2
                 end
             elseif me_type == 0xc0
-                default[:instrument] != -1 && (byte1 = default[:instrument])
-                byte2 = max(default[:variation], 0)
-                instrument = getinstrument(part, byte1, byte2)
+                if korg
+                    if bank[part] < 2 && byte1 < 100
+                        if byte1 ∈ (9, 29)
+                            info[:channel] = 9
+                            drumkit[part] = bank[part] * 2 + ((byte1 == 9) ? 0 : 1)
+                        end
+                        i = korg_map[bank[part] + 1][byte1 + 1]
+                        byte1 = abs(i) - 1
+                        if info[:channel] != 9
+                            instrument = getinstrument(info[:channel] + 1, byte1, 0)
+                        else
+                            instrument = getinstrument(10, 0, 0)
+                        end
+                        info[:shift] = i < 0 ? 64 - 12 : 64
+                    else
+                        smf.next += 1
+                        continue
+                    end
+                else
+                    default[:instrument] != -1 && (byte1 = default[:instrument])
+                    byte2 = max(default[:variation], 0)
+                    instrument = getinstrument(part, byte1, byte2)
+                end
                 info[:name] = instruments[instrument][1]
                 info[:instrument] = instrument
-                info[:family] = families[div(byte1, 8) + 1]
+                if info[:channel] != 9
+                    program = instruments[instrument][2]
+                    info[:family] = families[div(program, 8) + 1]
+                else
+                    info[:family] = "Drums"
+                end
             end
             if !info[:muted] && default[:muted] ∈ (-1, 0)
+                if korg
+                    message = me_type | info[:channel]
+                end
                 if me_type != 0xc0
                     writemidi(smf, UInt8[message, byte1, byte2])
                 else

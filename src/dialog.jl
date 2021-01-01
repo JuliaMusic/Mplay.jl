@@ -62,9 +62,16 @@ function openfiledialog(path)
         end
         resettty()
         cls()
-        song = current > 0 ? joinpath(path, lowercase(split(songs[current][2])[end])) : nothing
+        if current > 0
+            args = split(songs[current][2])
+            file = joinpath(path, lowercase(args[end]))
+            opts = args[1:end-1]
+            song = (file, opts)
+        else
+            song = (nothing, nothing)
+        end
     else
-        song = nothing
+        song = (nothing, nothing)
     end
     song
 end

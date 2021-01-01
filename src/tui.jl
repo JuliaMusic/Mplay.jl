@@ -105,10 +105,11 @@ function main()
     end
     if isdir(path)
         while true
-            file = openfiledialog(path)
+            (file, opts) = openfiledialog(path)
             if file == nothing
                 break
             end
+            setopts(opts)
             mplay(file, device)
         end
     else
