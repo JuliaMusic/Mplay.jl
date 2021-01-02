@@ -168,7 +168,6 @@ mutable struct SMF
     off::Int
     ev::Array{Array{Any}}
     lyrics::Array{Any}
-    status::UInt8
     midi_clock::Int
     next::Int
     at::Float64
@@ -201,7 +200,7 @@ function StandardMidiFile()
     ev = Array{Array{Any}}(undef,0)
     channel = Array{Any}(undef,16)
     default = Array{Any}(undef,16)
-    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, [], 0x00, 0, 1,
+    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, [], 0, 1,
               0, -1, 0, 0, 0, 384, 120, 0, "", 0, 1, "", [], div(60000000,120),
               4, 4, 24, 8, 8, 0, 2, channel, default)
     for part in 1:16
