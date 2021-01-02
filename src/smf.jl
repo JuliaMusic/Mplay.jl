@@ -425,7 +425,7 @@ end
 
 
 function setopts(opts)
-    global korg, drumkit, bank
+    global korg, drum_channel, drumkit, bank
     korg = "-korg" ∈ opts
     if korg
         drumkit = zeros(Int, 16)
@@ -760,6 +760,18 @@ function updatelevels(smf)
 end
 
 
+function setdrumpart(smf)
+    global korg, drum_channel
+    if korg
+        smf.channel[10][:channel] = drum_channel
+        smf.channel[drum_channel + 1][:channel] = 9
+    else
+        smf.channel[10][:name] = instruments[getinstrument(10, 0, 0)][1]
+        smf.channel[10][:family] = "Drums"
+    end
+end
+
+
 function play(smf, device="")
     global debug, korg, drum_channel, drumkit, bank
     if smf.start < 0
@@ -768,10 +780,7 @@ function play(smf, device="")
         sleep(0.04)
         mididataset1(0x400130, 0x04)   # Hall 1
         sleep(0.04)
-        if korg
-            smf.channel[10][:channel] = drum_channel
-            smf.channel[drum_channel + 1][:channel] = 9
-        end
+        setdrumpart(smf)
         for part in 1:16
             arr = smf.default[part]
             if arr[:instrument] != -1 && arr[:variation] != -1

@@ -103,8 +103,8 @@ const korg_instruments = (
   )
 )
 
+korg = false
+drum_channel = 9
 drumkit = zeros(Int, 16)
 bank = zeros(Int, 16)
-drum_channel = 9
 
-korg = false
