@@ -724,7 +724,7 @@ function setpart(smf, part; info...)
         name, program, variation = instruments[info[:instrument]]
         smf.channel[part][:instrument] = info[:instrument]
         smf.channel[part][:name] = name
-        writemidi(smf, UInt8[0xb0 + channel, 0x20, gm1 ? 0x00 : 0x02]) # 0=default, 1=SC-55, 2=SC-88
+        writemidi(smf, UInt8[0xb0 + channel, 0x20, !gm1 ? 0 : 2]) # 0=default, 1=SC-55, 2=SC-88
         writemidi(smf, UInt8[0xb0 + channel, 0x00, variation])
         writemidi(smf, UInt8[0xc0 + channel, program])
         smf.default[part][:instrument] = program
