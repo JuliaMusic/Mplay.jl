@@ -20,17 +20,16 @@ mutable struct Player
     pause::Bool
 end
 
-player = nothing
-
 function MidiPlayer(path)
     if isfile(path)
         smf = readsmf(path)
         loadarrangement(smf, path)
-        Player(smf, falses(16), falses(16), false, 0, 1, false)
+        player = Player(smf, falses(16), falses(16), false, 0, 1, false)
     else
         println("Can't open $path")
         exit(1)
     end
+    player
 end
 
 function change_mute_state(player, part)
