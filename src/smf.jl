@@ -286,7 +286,8 @@ function readevents(smf)
         me = extractbyte(smf)
         if me == 0xf0 || me == 0xf7
             num_bytes = extractnumber(smf)
-            smf.off += num_bytes
+            metadata = extractbytes(smf, num_bytes)
+            push!(smf.ev, [at, me, num_bytes, metadata])
             if debug
                 println(dec(at, 6), " System Exclusive ($num_bytes bytes)")
             end
@@ -820,8 +821,8 @@ function play(smf, device="")
         timing(smf, at)
         smf.at = at
         if message == 0xf0 || message == 0xf7
-            smf.next += 1
-            return 0
+            at, message, num_bytes, metadata, = ev
+            writemidi(smf, UInt8[0xf0, metadata..., 0xf7])
         elseif message == 0xff
             at, message, me_type, data = ev
             if me_type == 0x05
