@@ -6,7 +6,7 @@ using ..midi
 
 export setopts, readsmf, loadarrangement, savearrangement, play,
        fileinfo, songinfo, beatinfo, chordinfo, getprogram,
-       setsong, partinfo, setpart, allnotesoff, cpuload
+       setsong, partinfo, setpart, allnotesoff, allsoundoff, cpuload
 export midi
 
 include("korg.jl")

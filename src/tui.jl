@@ -80,7 +80,7 @@ function mplay(path, device="")
         if kbhit()
             key = readchar()
             if key == Int('\e')
-                for part in 1:16 allnotesoff(smf, part) end
+                allsoundoff(smf)
                 cls();
                 break
             else
