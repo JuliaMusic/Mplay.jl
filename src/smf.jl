@@ -104,10 +104,6 @@ const meta = (
     "Sequence Number", "Text", "Copyright", "Sequence Name",
     "Instrument", "Lyric", "Marker", "Cue Point")
 
-const parameters = (
-    :muted, :channel, :instrument, :variation, :level, :pan,
-    :reverb, :chorus, :delay, :sense, :shift)
-
 const block = (
     1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 13, 14, 15)
 
@@ -159,6 +155,39 @@ function printable(chars)
     return result
 end
 
+mutable struct Part
+    used::Bool
+    muted::Bool
+    name::String
+    channel::Int
+    instrument::Int
+    family::String
+    variation::Int
+    level::Int
+    pan::Int
+    reverb::Int
+    chorus::Int
+    delay::Int
+    sense::Int
+    shift::Int
+    velocity::Int
+    intensity::Int
+    notes::Array{Int}
+end
+
+mutable struct Arrangement
+    muted::Int
+    channel::Int
+    instrument::Int
+    variation::Int
+    level::Int
+    pan::Int
+    reverb::Int
+    chorus::Int
+    delay::Int
+    sense::Int
+    shift::Int
+end
 
 mutable struct SMF
     path::AbstractString
@@ -191,8 +220,8 @@ mutable struct SMF
     key::Int
     key_shift::Int
     mode::Int
-    channel::Array{Any}
-    default::Array{Any}
+    channel::Array{Part}
+    default::Array{Arrangement}
 end
 
 
@@ -204,34 +233,9 @@ function StandardMidiFile()
               0, -1, 0, 0, 0, 384, 120, 0, "", 0, 1, "", [], div(60000000,120),
               4, 4, 24, 8, 8, 0, 2, channel, default)
     for part in 1:16
-        smf.channel[part] = Dict(:used => false,
-                                 :muted => false,
-                                 :name => "",
-                                 :channel => part - 1,
-                                 :instrument => 1,
-                                 :family => "",
-                                 :variation => 0,
-                                 :level => 100,
-                                 :pan => 64,
-                                 :reverb => 40,
-                                 :chorus => 0,
-                                 :delay => 0,
-                                 :sense => 64,
-                                 :shift => 64,
-                                 :velocity => 0,
-                                 :intensity => 0,
-                                 :notes => [])
-        smf.default[part] = Dict(:muted => -1,
-                                 :channel => -1,
-                                 :instrument => -1,
-                                 :variation => -1,
-                                 :level => -1,
-                                 :pan => -1,
-                                 :reverb => -1,
-                                 :chorus => -1,
-                                 :delay => -1,
-                                 :sense => -1,
-                                 :shift => -1)
+        smf.channel[part] = Part(false, false, "", part - 1, 1, "", 0, 100, 64,
+                                 40, 0, 0, 64, 64, 0, 0, [])
+        smf.default[part] = Arrangement(-ones(11)...)
     end
     smf
 end
@@ -489,18 +493,13 @@ function loadarrangement(smf, path)
             line = readline(file)
         end
         for part = 1:16
-            row = [parse(Int, x) for x in split(line)]
-            for column in 1:11
-                smf.default[part][parameters[column]] = row[column]
-            end
+            smf.default[part] = Arrangement([parse(Int, x) for x in split(line)]...)
             line = readline(file)
         end
         close(file)
     else
         for part = 1:16
-            for column in 1:11
-                smf.default[part][parameters[column]] = -1
-            end
+            smf.default[part] = Arrangement(-ones(11)...)
         end
     end
 end
@@ -511,8 +510,10 @@ function savearrangement(smf)
     file = open(path, "w")
     @printf(file, "#!MPlay\n# M Ch Ins Var Vol Pan Rev Cho Del Sen +/-\n")
     for part = 1:16
-        values = [smf.default[part][parameters[column]] for column in 1:11]
-        @printf(file, "%3d %2d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n", values...)
+        arr = smf.default[part]
+        @printf(file, "%3d %2d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
+                arr.muted, arr.channel, arr.instrument, arr.variation, arr.level, arr.pan,
+                arr.reverb, arr.chorus, arr.delay, arr.sense, arr.shift)
     end
     close(file)
 end
@@ -558,8 +559,8 @@ function chordinfo(smf)
     keys_pressed = 0
     for part in 1:16
         info = smf.channel[part]
-        if part != 10 && info[:family] != "Bass"
-            for note ∈ info[:notes]
+        if part != 10 && info.family != "Bass"
+            for note ∈ info.notes
                 keys_pressed |= (1 << (note % 12))
             end
         end
@@ -604,11 +605,11 @@ end
 
 
 function allnotesoff(smf, part)
-    channel = smf.channel[part][:channel]
-    for note ∈ smf.channel[part][:notes]
+    channel = smf.channel[part].channel
+    for note ∈ smf.channel[part].notes
         writemidi(smf, UInt8[0x80 + channel, note, 0])
     end
-    smf.channel[part][:notes] = []
+    smf.channel[part].notes = []
 end
 
 
@@ -687,53 +688,53 @@ end
 
 
 function setpart(smf, part; info...)
-    channel = smf.channel[part][:channel]
+    channel = smf.channel[part].channel
     info = Dict(info)
     if haskey(info, :muted)
-        smf.channel[part][:muted] = info[:muted]
+        smf.channel[part].muted = info[:muted]
         if info[:muted]
             allnotesoff(smf, part)
         end
     elseif haskey(info, :level)
-        smf.channel[part][:level] = info[:level]
-        smf.default[part][:level] = info[:level]
+        smf.channel[part].level = info[:level]
+        smf.default[part].level = info[:level]
         writemidi(smf, UInt8[0xb0 + channel, 7, info[:level]])
     elseif haskey(info, :sense)
-        smf.channel[part][:sense] = info[:sense]
-        smf.default[part][:sense] = info[:sense]
+        smf.channel[part].sense = info[:sense]
+        smf.default[part].sense = info[:sense]
         mididataset1(0x40101a + block[part] << 8, info[:sense])
         sleep(0.04)
     elseif haskey(info, :shift)
         allnotesoff(smf, part)
-        smf.channel[part][:shift] = info[:shift]
-        smf.default[part][:shift] = info[:shift]
+        smf.channel[part].shift = info[:shift]
+        smf.default[part].shift = info[:shift]
         mididataset1(0x401016 + block[part] << 8, info[:shift])
         sleep(0.04)
     elseif haskey(info, :delay)
-        smf.channel[part][:delay] = info[:delay]
-        smf.default[part][:delay] = info[:delay]
+        smf.channel[part].delay = info[:delay]
+        smf.default[part].delay = info[:delay]
         writemidi(smf, UInt8[0xb0 + channel, 94, info[:delay]])
     elseif haskey(info, :chorus)
-        smf.channel[part][:chorus] = info[:chorus]
-        smf.default[part][:chorus] = info[:chorus]
+        smf.channel[part].chorus = info[:chorus]
+        smf.default[part].chorus = info[:chorus]
         writemidi(smf, UInt8[0xb0 + channel, 93, info[:chorus]])
     elseif haskey(info, :reverb)
-        smf.channel[part][:reverb] = info[:reverb]
-        smf.default[part][:reverb] = info[:reverb]
+        smf.channel[part].reverb = info[:reverb]
+        smf.default[part].reverb = info[:reverb]
         writemidi(smf, UInt8[0xb0 + channel, 91, info[:reverb]])
     elseif haskey(info, :pan)
-        smf.channel[part][:pan] = info[:pan]
-        smf.default[part][:pan] = info[:pan]
+        smf.channel[part].pan = info[:pan]
+        smf.default[part].pan = info[:pan]
         writemidi(smf, UInt8[0xb0 + channel, 10, info[:pan]])
     elseif haskey(info, :instrument)
         name, program, variation = instruments[info[:instrument]]
-        smf.channel[part][:instrument] = info[:instrument]
-        smf.channel[part][:name] = name
+        smf.channel[part].instrument = info[:instrument]
+        smf.channel[part].name = name
         writemidi(smf, UInt8[0xb0 + channel, 0x20, !gm1 ? 0 : 2]) # 0=default, 1=SC-55, 2=SC-88
         writemidi(smf, UInt8[0xb0 + channel, 0x00, variation])
         writemidi(smf, UInt8[0xc0 + channel, program])
-        smf.default[part][:instrument] = program
-        smf.default[part][:variation] = variation
+        smf.default[part].instrument = program
+        smf.default[part].variation = variation
     end
 end
 
@@ -754,11 +755,11 @@ end
 function updatelevels(smf)
     for part in 1:16
         info = partinfo(smf, part)
-        if info[:notes] == [] || info[:muted]
-            if info[:intensity] >= 2
-                info[:intensity] -= 2
+        if info.notes == [] || info.muted == 1
+            if info.intensity >= 2
+                info.intensity -= 2
             else
-                info[:intensity] = 0
+                info.intensity = 0
             end
         end
     end
@@ -768,11 +769,11 @@ end
 function setdrumpart(smf)
     global korg, drum_channel
     if korg
-        smf.channel[10][:channel] = drum_channel
-        smf.channel[drum_channel + 1][:channel] = 9
+        smf.channel[10].channel = drum_channel
+        smf.channel[drum_channel + 1].channel = 9
     else
-        smf.channel[10][:name] = instruments[getinstrument(10, 0, 0)][1]
-        smf.channel[10][:family] = "Drums"
+        smf.channel[10].name = instruments[getinstrument(10, 0, 0)][1]
+        smf.channel[10].family = "Drums"
     end
 end
 
@@ -788,15 +789,15 @@ function play(smf, device="")
         setdrumpart(smf)
         for part in 1:16
             arr = smf.default[part]
-            if arr[:instrument] != -1 && arr[:variation] != -1
-                instrument = getinstrument(part, arr[:instrument], max(arr[:variation], 0))
+            if arr.instrument != -1 && arr.variation != -1
+                instrument = getinstrument(part, arr.instrument, max(arr.variation, 0))
                 setpart(smf, part, instrument=instrument)
             end
-            if arr[:level] != -1 setpart(smf, part, level=arr[:level]) end
-            if arr[:pan] != -1 setpart(smf, part, pan=arr[:pan]) end
-            if arr[:reverb] != -1 setpart(smf, part, reverb=arr[:reverb]) end
-            if arr[:chorus] != -1 setpart(smf, part, chorus=arr[:chorus]) end
-            if arr[:delay] != -1 setpart(smf, part, delay=arr[:delay]) end
+            if arr.level != -1 setpart(smf, part, level=arr.level) end
+            if arr.pan != -1 setpart(smf, part, pan=arr.pan) end
+            if arr.reverb != -1 setpart(smf, part, reverb=arr.reverb) end
+            if arr.chorus != -1 setpart(smf, part, chorus=arr.chorus) end
+            if arr.delay != -1 setpart(smf, part, delay=arr.delay) end
         end
         smf.start = time()
         writemidi(smf, UInt8[0xfc, 0xfa])
@@ -869,10 +870,10 @@ function play(smf, device="")
             channel = message & 0x0f
             part = channel + 1
             info = smf.channel[part]
-            info[:used] = true
+            info.used = true
             default = smf.default[part]
             if me_type ∈ (0x80, 0x90)
-                if korg && info[:channel] == 9
+                if korg && info.channel == 9
                     if 35 < byte1 < 96
                         byte1 = korg_drumset[drumkit[part] + 1][byte1 - 35]
                     else
@@ -884,95 +885,95 @@ function play(smf, device="")
                     end
                     message = me_type | 0x09
                 end
-                if info[:channel] != 9
+                if info.channel != 9
                     byte1 += smf.key_shift
                     if soft_shift
-                        byte1 += info[:shift] - 64
+                        byte1 += info.shift - 64
                     end
                 end
             end
             if me_type == 0x80
-                if byte1 in info[:notes]
-                    info[:notes] = setdiff(info[:notes], byte1)
+                if byte1 in info.notes
+                    info.notes = setdiff(info.notes, byte1)
                 end
-                info[:velocity] = 0
+                info.velocity = 0
             elseif me_type == 0x90
                 if byte2 != 0
-                    if byte1 ∈ info[:notes]
+                    if byte1 ∈ info.notes
                         if debug println("Note retriggered") end
                     else
-                        info[:notes] = [info[:notes]; byte1]
+                        info.notes = [info.notes; byte1]
                     end
-                    if !info[:muted]
-                        info[:intensity] = byte2
+                    if info.muted == 0
+                        info.intensity = byte2
                     end
-                elseif byte1 ∈ info[:notes]
-                    info[:notes] = setdiff(info[:notes], byte1)
+                elseif byte1 ∈ info.notes
+                    info.notes = setdiff(info.notes, byte1)
                 end
-                info[:velocity] = byte2
+                info.velocity = byte2
             elseif me_type == 0xb0
                 if byte1 == 0
-                    default[:variation] != -1 && (byte2 = default[:variation])
-                    program = instruments[info[:instrument]][2]
+                    default.variation != -1 && (byte2 = default.variation)
+                    program = instruments[info.instrument][2]
                     getinstrument(part, program, byte2) == program && (byte2 = 0)
                     bank[part] = 0
-                    info[:variation] = byte2
-                    info[:family] = families[div(program, 8) + 1]
+                    info.variation = byte2
+                    info.family = families[div(program, 8) + 1]
                 elseif byte1 == 32
                     bank[part] |= byte2
                     byte2 = !gm1 ? 0 : 2 # 0=default, 1=SC-55, 2=SC-88
                 elseif byte1 == 7
-                    default[:level] != -1 && (byte2 = default[:level])
-                    info[:level] = byte2
+                    default.level != -1 && (byte2 = default.level)
+                    info.level = byte2
                 elseif byte1 == 10
-                    default[:pan] != -1 && (byte2 = default[:pan])
-                    info[:pan] = byte2
+                    default.pan != -1 && (byte2 = default.pan)
+                    info.pan = byte2
                 elseif byte1 == 91
-                    default[:reverb] != -1 && (byte2 = default[:reverb])
-                    info[:reverb] = byte2
+                    default.reverb != -1 && (byte2 = default.reverb)
+                    info.reverb = byte2
                 elseif byte1 == 93
-                    default[:chorus] != -1 && (byte2 = default[:chorus])
-                    info[:chorus] = byte2
+                    default.chorus != -1 && (byte2 = default.chorus)
+                    info.chorus = byte2
                 elseif byte1 == 94
-                    default[:delay] != -1 && (byte2 = default[:delay])
-                    info[:delay] = byte2
+                    default.delay != -1 && (byte2 = default.delay)
+                    info.delay = byte2
                 end
             elseif me_type == 0xc0
                 if korg
                     if bank[part] < 2 && byte1 < 100
                         if byte1 ∈ (9, 29)
-                            info[:channel] = 9
+                            info.channel = 9
                             drumkit[part] = bank[part] * 2 + ((byte1 == 9) ? 0 : 1)
                         end
                         i = korg_map[bank[part] + 1][byte1 + 1]
                         byte1 = abs(i) - 1
-                        if info[:channel] != 9
-                            instrument = getinstrument(info[:channel] + 1, byte1, 0)
+                        if info.channel != 9
+                            instrument = getinstrument(info.channel + 1, byte1, 0)
                         else
                             instrument = getinstrument(10, 0, 0)
                         end
-                        info[:shift] = i < 0 ? 64 - 12 : 64
+                        info.shift = i < 0 ? 64 - 12 : 64
                     else
                         smf.next += 1
                         continue
                     end
                 else
-                    default[:instrument] != -1 && (byte1 = default[:instrument])
-                    byte2 = max(default[:variation], 0)
+                    default.instrument != -1 && (byte1 = default.instrument)
+                    byte2 = max(default.variation, 0)
                     instrument = getinstrument(part, byte1, byte2)
                 end
-                info[:name] = instruments[instrument][1]
-                info[:instrument] = instrument
-                if info[:channel] != 9
+                info.name = instruments[instrument][1]
+                info.instrument = instrument
+                if info.channel != 9
                     program = instruments[instrument][2]
-                    info[:family] = families[div(program, 8) + 1]
+                    info.family = families[div(program, 8) + 1]
                 else
-                    info[:family] = "Drums"
+                    info.family = "Drums"
                 end
             end
-            if !info[:muted] && default[:muted] ∈ (-1, 0)
+            if info.muted == 0 && default.muted ∈ (-1, 0)
                 if korg
-                    message = me_type | info[:channel]
+                    message = me_type | info.channel
                 end
                 if me_type != 0xc0
                     writemidi(smf, UInt8[message, byte1, byte2])

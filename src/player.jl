@@ -7,9 +7,6 @@ const SOLO_ON = Dict{Char, Any}(
     'B' => ["Bass"], 'G' => ["Guitar"],
     'K' => ["Piano", "Organ", "Strings", "Ensemble"])
 
-const parameters = Dict(
-    1 => :instrument, 2 => :level, 3 => :pan, 4 => :reverb, 5 => :chorus, 6 => :delay, 7 => :sense, 8 => :shift)
-
 mutable struct Player
     midi::Any
     muted::Array{Bool,1}
@@ -61,28 +58,28 @@ end
 function controlchange(player, value)
     info = partinfo(player.midi, player.selection)
     if player.parameter == 1
-        instrument = min(max(info[:instrument] + value, 1), length(instruments))
+        instrument = min(max(info.instrument + value, 1), length(instruments))
         setpart(player.midi, player.selection, instrument=instrument)
     elseif player.parameter == 2
-        level = min(max(info[:level] + value, 0), 127)
+        level = min(max(info.level + value, 0), 127)
         setpart(player.midi, player.selection, level=level)
     elseif player.parameter == 3
-        pan = min(max(info[:pan] + value, 0), 127)
+        pan = min(max(info.pan + value, 0), 127)
         setpart(player.midi, player.selection, pan=pan)
     elseif player.parameter == 4
-        reverb = min(max(info[:reverb] + value, 0), 127)
+        reverb = min(max(info.reverb + value, 0), 127)
         setpart(player.midi, player.selection, reverb=reverb)
     elseif player.parameter == 5
-        chorus = min(max(info[:chorus] + value, 0), 127)
+        chorus = min(max(info.chorus + value, 0), 127)
         setpart(player.midi, player.selection, chorus=chorus)
     elseif player.parameter == 6
-        delay = min(max(info[:delay] + value, 0), 127)
+        delay = min(max(info.delay + value, 0), 127)
         setpart(player.midi, player.selection, delay=delay)
     elseif player.parameter == 7
-        sense = min(max(info[:sense] + value, 0), 127)
+        sense = min(max(info.sense + value, 0), 127)
         setpart(player.midi, player.selection, sense=sense)
     elseif player.parameter == 8
-        shift = min(max(info[:shift] + value, 40), 88)
+        shift = min(max(info.shift + value, 40), 88)
         setpart(player.midi, player.selection, shift=shift)
     end
 end
@@ -94,18 +91,18 @@ function dispatch(player, key)
     elseif key == '\r'
         player.selection = 0
     elseif key == '\t'
-        if player.parameter < length(parameters) player.parameter += 1 else player.parameter = 1 end
+        if player.parameter < 8 player.parameter += 1 else player.parameter = 1 end
     elseif key == Char(KEY_DOWN)
         if player.selection < 16 player.selection += 1 else player.selection = 1 end
         info = partinfo(player.midi, player.selection)
-        while !info[:used]
+        while !info.used
             if player.selection < 16 player.selection += 1 else player.selection = 1 end
             info = partinfo(player.midi, player.selection)
         end
     elseif key == Char(KEY_UP)
         if player.selection > 1 player.selection -= 1 else player.selection = 16 end
         info = partinfo(player.midi, player.selection)
-        while !info[:used]
+        while !info.used
             if player.selection > 1 player.selection -= 1 else player.selection = 16 end
             info = partinfo(player.midi, player.selection)
         end
@@ -135,7 +132,7 @@ function dispatch(player, key)
     elseif haskey(MUTE_ON_OFF, key)
         for part in 1:16
             info = partinfo(player.midi, part)
-            if info[:family] ∈ MUTE_ON_OFF[key]
+            if info.family ∈ MUTE_ON_OFF[key]
                 player.muted[part] = !player.muted[part]
             change_mute_state(player, part)
             end
@@ -147,7 +144,7 @@ function dispatch(player, key)
     elseif haskey(SOLO_ON, key)
         for part in 1:16
             info = partinfo(player.midi, part)
-            player.muted[part] = info[:family] ∉ SOLO_ON[key]
+            player.muted[part] = info.family ∉ SOLO_ON[key]
             change_mute_state(player, part)
         end
     elseif key == '<'
