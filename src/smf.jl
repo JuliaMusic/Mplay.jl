@@ -496,6 +496,12 @@ function loadarrangement(smf, path)
             line = readline(file)
         end
         close(file)
+    else
+        for part = 1:16
+            for column in 1:11
+                smf.default[part][parameters[column]] = -1
+            end
+        end
     end
 end
 
