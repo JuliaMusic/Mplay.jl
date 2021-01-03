@@ -280,6 +280,7 @@ function readevents(smf)
     chan = 0
     at = 0
     while true
+        if smf.off + 4 > length(smf.mf) break end # sanity check
         delta = extractnumber(smf)
         at += delta
         me = extractbyte(smf)
@@ -301,21 +302,19 @@ function readevents(smf)
                             printable(text))
                 end
             elseif me_type <= 0x0f
-                push!(smf.ev,
-                      [at, me, me_type, extractbytes(smf, num_bytes)])
+                smf.off += num_bytes
             elseif me_type == 0x20
                 byte1 = extractbyte(smf)
-                push!(smf.ev, [at, me, me_type, byte1])
                 if debug
                     println(dec(at, 6), " Channel Prefix 0x", hex(byte1, 2))
                 end
             elseif me_type == 0x21
                 byte1 = extractbyte(smf)
-                push!(smf.ev, [at, me, me_type, byte1])
                 if debug
                     println(dec(at, 6), " Port Number 0x", hex(byte1, 2))
                 end
             elseif me_type == 0x2f
+                push!(smf.ev, [at, 0, 0, 0])
                 if debug
                     println(dec(at, 6), " End of Track")
                 end
@@ -384,7 +383,7 @@ function readevents(smf)
                     else
                         s = ""
                     end
-                    if state ∈ (0, 1, 2, 3, 4, 6)
+                    if state ∈ (0, 1, 2, 3, 6)
                         println(dec(at, 6), " ", messages[state + 1],
                                 " 0x", hex(chan, 2), " 0x", hex(byte1, 2),
                                 " 0x", hex(byte2, 2), s)
