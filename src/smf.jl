@@ -23,7 +23,7 @@ end
 
 debug = false
 warnings = false
-soft_shift = true
+soft_shift = false
 
 const gm1 = false
 
@@ -953,6 +953,9 @@ function play(smf, device="")
                             instrument = getinstrument(10, 0, 0)
                         end
                         info.shift = i < 0 ? 64 - 12 : 64
+                        if i < 0 && !soft_shift
+                            setpart(smf, part, shift=info.shift)
+                        end
                     else
                         smf.next += 1
                         continue

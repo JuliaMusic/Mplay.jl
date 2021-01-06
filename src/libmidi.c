@@ -90,32 +90,40 @@ void readProc(const MIDIPacketList *newPackets, void *refCon,
 DLLEXPORT void midiopen(char *device)
 {
 #ifdef __APPLE__
-  if (strcmp(device, "dlss") == 0 || MIDIGetDestination(0) == 0 )
+  if (strcmp(device, "dlss") == 0 || strcmp(device, "scva") == 0 || MIDIGetDestination(0) == 0 )
     {
-      AUNode synthNode, limiterNode, outNode;
+      AUNode synthNode, outNode;
       AudioComponentDescription cd;
       OSStatus result;
 
       __Require_noErr (result = NewAUGraph (&graph), home);
 
-      cd.componentManufacturer = kAudioUnitManufacturer_Apple;
       cd.componentFlags = 0;
       cd.componentFlagsMask = 0;
-      cd.componentType = kAudioUnitType_MusicDevice;
-      cd.componentSubType = kAudioUnitSubType_DLSSynth;
-      __Require_noErr (result = AUGraphAddNode (graph, &cd, &synthNode), home);
 
-      cd.componentType = kAudioUnitType_Effect;
-      cd.componentSubType = kAudioUnitSubType_PeakLimiter;
-      __Require_noErr (result = AUGraphAddNode (graph, &cd, &limiterNode), home);
+      if (strcmp(device, "scva") == 0)
+        {
+          cd.componentType = 'aumu';
+          cd.componentSubType = 'Sc55';
+          cd.componentManufacturer = 'rolD';
+        }
+      else
+        {
+          cd.componentType = kAudioUnitType_MusicDevice;
+          cd.componentSubType = kAudioUnitSubType_DLSSynth;
+          cd.componentManufacturer = kAudioUnitManufacturer_Apple;
+        }
+
+      __Require_noErr (result = AUGraphAddNode (graph, &cd, &synthNode), home);
 
       cd.componentType = kAudioUnitType_Output;
       cd.componentSubType = kAudioUnitSubType_DefaultOutput;
+      cd.componentManufacturer = kAudioUnitManufacturer_Apple;
+
       __Require_noErr (result = AUGraphAddNode (graph, &cd, &outNode), home);
 
       __Require_noErr (result = AUGraphOpen (graph), home);
-      __Require_noErr (result = AUGraphConnectNodeInput (graph, synthNode, 0, limiterNode, 0), home);
-      __Require_noErr (result = AUGraphConnectNodeInput (graph, limiterNode, 0, outNode, 0), home);
+      __Require_noErr (result = AUGraphConnectNodeInput (graph, synthNode, 0, outNode, 0), home);
 
       __Require_noErr (result = AUGraphNodeInfo(graph, synthNode, 0, &synthUnit), home);
 

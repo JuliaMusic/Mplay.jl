@@ -69,10 +69,14 @@ function mplay(path, device="")
     player = MidiPlayer(path)
     smf = player.midi
 
-    settty()
-    cls()
+    raw_mode = false
     while true
         delta = play(smf, device)
+        if !raw_mode
+            settty()
+            cls()
+            raw_mode = true
+        end
         update(player, smf)
         if delta > 0
             sleep(delta)
@@ -91,7 +95,7 @@ function mplay(path, device="")
             break
         end
     end
-    resettty()
+    raw_mode && resettty()
 end
 
 export mplay
@@ -99,10 +103,10 @@ export mplay
 function main()
     if length(ARGS) > 0
         path = ARGS[1]
-        device = length(ARGS) > 1 ? ARGS[2] : ""
     else
         path = "."
     end
+    device = haskey(ENV, "MIDI_DEVICE") ? ENV["MIDI_DEVICE"] : ""
     if isdir(path)
         while true
             (file, opts) = openfiledialog(path)
