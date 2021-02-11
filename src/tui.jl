@@ -28,13 +28,10 @@ const intensities = (
 include("player.jl")
 
 function showlyrics(smf)
-    line = smf.column == 0 ? smf.line : smf.line + 1
-    if 1 <= line <= length(smf.lyrics)
-        outtextxy(1, 22, rpad(smf.lyrics[line], 80))
-        if smf.column > 0
-            outtextxy(smf.column > 1 ? smf.column - length(smf.text) + 1 : smf.column, 22, smf.text, 2)
-        end
-        outtextxy(1, 23, rpad(line < length(smf.lyrics) ? smf.lyrics[line + 1] : "", 80))
+    if 1 <= smf.line <= length(smf.lyrics)
+        outtextxy(1, 22, rpad(smf.lyrics[smf.line], 80))
+        outtextxy(smf.column > 1 ? smf.column - length(smf.text) : smf.column, 22, smf.text, 2)
+        outtextxy(1, 23, rpad(smf.line < length(smf.lyrics) ? smf.lyrics[smf.line + max(smf.skiplines, 1)] : "", 80))
     end
 end
 

@@ -210,6 +210,7 @@ mutable struct SMF
     text::String
     line::Int
     column::Int
+    skiplines::Int
     chord::String
     notes::Array{Any}
     tempo::Int
@@ -227,10 +228,11 @@ end
 
 function StandardMidiFile()
     ev = Array{Array{Any}}(undef,0)
+    lyrics = Array{Array{Any}}(undef,0)
     info = Array{Any}(undef,16)
     preset = Array{Any}(undef,16)
-    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, [], 0, 1,
-              0, -1, 0, 0, 0, 384, 120, 0, "", 0, 1, "", [], div(60000000,120),
+    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, lyrics, 0, 1,
+              0, -1, 0, 0, 0, 384, 120, 0, "", 1, 1, 0, "", [], div(60000000,120),
               4, 4, 24, 8, 8, 0, 2, info, preset)
     for part in 1:16
         smf.info[part] = Part(false, false, "", part - 1, 1, "", 0, 100, 64,
@@ -278,6 +280,20 @@ function extractnumber(smf)
     value
 end
 
+function collectlyrics(smf, at, text)
+    if text[1] ∈ (13, 10)
+        push!(smf.lyrics, smf.text)
+        smf.text = ""
+    else
+        if text[end] ∈ (13, 10)
+            push!(smf.lyrics, smf.text * printable(text[1:end-1]))
+            smf.text = ""
+        else
+            smf.text *= printable(text)
+        end
+    end
+end
+
 function readevents(smf)
     global debug, korg, drum_channel
     state = 0
@@ -301,6 +317,9 @@ function readevents(smf)
             if me_type < 8
                 text = extractbytes(smf, num_bytes)
                 push!(smf.ev, [at, me, me_type, text])
+                if me_type == 0x05
+                    collectlyrics(smf, at, text)
+                end
                 if debug
                     println(dec(at, 6), " $(meta[me_type + 1]): ",
                             printable(text))
@@ -404,29 +423,6 @@ function readevents(smf)
 end
 
 
-function collectlyrics(smf)
-    lyrics = []
-    line = ""
-    for ev in smf.ev[1:end]
-        at, message, me_type, data = ev
-        if message == 0xff && me_type == 0x05
-            if data[1] ∈ (13, 10)
-               push!(lyrics, line)
-               line = ""
-            else
-                if data[end] ∈ (13, 10)
-                    push!(lyrics, line * printable(data[1:end-1]))
-                    line = ""
-                else
-                    line *= printable(data)
-                end
-            end
-        end
-    end
-    lyrics
-end
-
-
 function setopts(opts)
     global korg, drum_channel, drumkit, bank
     korg = "-korg" ∈ opts
@@ -463,8 +459,7 @@ function readsmf(path)
     end
 
     smf.ev = sort(smf.ev[1:end], by=x->x[1])
-
-    smf.lyrics = collectlyrics(smf)
+    smf.text = ""
 
     smf.playing_time = 0
     at = start = 0
@@ -621,13 +616,39 @@ function allsoundoff(smf)
 end
 
 
+function updatetext(smf, data)
+    if data[1] ∈ (13, 10)
+        smf.skiplines += 1
+    else
+        if smf.skiplines > 0
+            smf.line += smf.skiplines
+            smf.column = 1
+            smf.skiplines = 0
+        end
+        if data[end] ∈ (13, 10)
+            smf.text = printable(data[1:end-1])
+            smf.skiplines = 1
+        else
+            smf.text = printable(data)
+            smf.column += length(smf.text)
+        end
+    end
+end
+
+
 function songposition(smf, beat)
     smf.next = 1
+    smf.line = 1
+    smf.skiplines = 0
+    smf.column = 1
     for ev in smf.ev
-        at, message, byte1, byte2 = ev
+        at, message, me_type, data = ev
         if at > beat * smf.division
             smf.elapsed_time = time() - at / smf.division / 1000000. * smf.tempo
             break
+        end
+        if message == 0xff && me_type == 0x05
+            updatetext(smf, data)
         end
         smf.next += 1
     end
@@ -802,7 +823,9 @@ function play(smf, device="")
         smf.start = time()
         writemidi(smf, UInt8[0xfc, 0xfa])
         smf.elapsed_time = smf.start
-        smf.line = 0
+        smf.line = 1
+        smf.skiplines = 0
+        smf.column = 1
     end
     if smf.pause != 0
         return 0.04
@@ -831,19 +854,7 @@ function play(smf, device="")
         elseif message == 0xff
             at, message, me_type, data = ev
             if me_type == 0x05
-                if data[1] ∈ (13, 10)
-                    smf.line += 1
-                    smf.column = 0
-                else
-                    if data[end] ∈ (13, 10)
-                        smf.text = printable(data[1:end-1])
-                        smf.line += 1
-                        smf.column = 1
-                    else
-                        smf.text = printable(data)
-                        smf.column += length(smf.text)
-                    end
-                end
+                updatetext(smf, data)
             elseif me_type == 0x51
                 now = time()
                 tempo = smf.tempo

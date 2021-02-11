@@ -100,14 +100,11 @@ function paint_notes(notes)
 end
 
 function showlyrics(smf)
-    line = smf.column == 0 ? smf.line : smf.line + 1
-    if 1 <= line <= length(smf.lyrics)
-        draw_text(15, 147, rpad(smf.lyrics[line], 80), 1)
-        if smf.column > 0
-            column = smf.column > 1 ? smf.column - length(smf.text) + 1 : smf.column
-            draw_text(15 + (column - 1) * 7, 147, rstrip(smf.text), 2)
-        end
-        draw_text(15, 132, rpad(line < length(smf.lyrics) ? smf.lyrics[line + 1] : "", 80), 1)
+    if 1 <= smf.line <= length(smf.lyrics)
+        draw_text(15, 147, rpad(smf.lyrics[smf.line], 80), 1)
+        column = smf.column > 1 ? smf.column - length(smf.text) : smf.column
+        draw_text(15 + (column - 1) * 7, 147, rstrip(smf.text), 2)
+        draw_text(15, 132, rpad(smf.line < length(smf.lyrics) ? smf.lyrics[smf.line + max(smf.skiplines, 1)] : "", 80), 1)
     end
 end
 
