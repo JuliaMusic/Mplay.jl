@@ -480,7 +480,16 @@ end
 
 
 function loadarrangement(smf, path)
-    path = replace(path, ".mid" => ".arr")
+    for part = 1:16
+        smf.preset[part] = Arrangement(-ones(11)...)
+    end
+    if endswith(path, ".mid")
+        path = replace(path, ".mid" => ".arr")
+    elseif endswith(path, ".MID")
+        path = replace(path, ".MID" => ".ARR")
+    else
+        return
+    end
     if isfile(path)
         file = open(path, "r")
         line = readline(file)
@@ -492,10 +501,6 @@ function loadarrangement(smf, path)
             line = readline(file)
         end
         close(file)
-    else
-        for part = 1:16
-            smf.preset[part] = Arrangement(-ones(11)...)
-        end
     end
 end
 
