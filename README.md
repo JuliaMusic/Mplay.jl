@@ -81,13 +81,16 @@ build your own binaries:
 *macOS*
 
 ```
-cc -shared -o libmidi.dylib libmidi.c \
+cc -shared -arch arm64 -arch x86_64 -o libmidi.dylib libmidi.c \
    -framework CoreMIDI -framework CoreAudio -framework AudioUnit \
    -framework AudioToolbox -framework Cocoa
+cc -shared -arch arm64 -arch x86_64 -o libconsole.dylib libconsole.c
 ```
 *Windows*
 
 ```
 cl /c libmidi.c
-link /out:libmidi.dll libmidi.obj -dll winmm.lib
+link /out:libmidi.dll -dll libmidi.obj winmm.lib
+cl /c libconsole.c
+link /out:libconsole.dll -dll libconsole.obj
 ```

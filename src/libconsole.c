@@ -1,6 +1,6 @@
 /*
  macOS:
-   cc -shared -o libconsole.dylib libconsole.c
+   cc -shared -arch arm64 -arch x86_64 -o libconsole.dylib libconsole.c
  Windows:
    cl /c libconsole.c
    link /out:libconsole.dll libconsole.obj

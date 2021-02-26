@@ -1,6 +1,6 @@
 /*
  macOS:
-   cc -shared -o libmidi.dylib libmidi.c \
+   cc -shared -arch arm64 -arch x86_64 -o libmidi.dylib libmidi.c \
       -framework CoreMIDI -framework CoreAudio -framework AudioUnit \
       -framework AudioToolbox -framework Cocoa
  Windows:
