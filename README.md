@@ -94,3 +94,20 @@ link /out:libmidi.dll -dll libmidi.obj winmm.lib
 cl /c libconsole.c
 link /out:libconsole.dll -dll libconsole.obj
 ```
+
+There is also a startup script in the `src` directory which you can symlink to simplify the use of Mplay, e.g.
+
+```
+ln -s ${HOME}/Mplay.jl/src/Mplay.sh /opt/bin/Mplay
+```
+
+With the *Mplay* command you can not only select the desired user interface, but also specify the MIDI device. For example, under *macOS* the current version offers the possibility to redirect the MIDI output to the Roland Sound Canvas VA plugin (`--device=scva`) - if installed - as an alternative to the default Apple DLS Music Device.
+
+```
+% Mplay -h
+Mplay [-h|--help] [--device=midi-device] [--gui] midi-file
+```
+
+The text user interface is now enabled by default.
+
+![Mplay-tui](Mplay-tui.png)
