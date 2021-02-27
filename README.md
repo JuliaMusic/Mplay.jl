@@ -95,6 +95,13 @@ cl /c libconsole.c
 link /out:libconsole.dll -dll libconsole.obj
 ```
 
+*Linux*
+
+```
+cc -shared -fPIC -o libmidi.so libmidi.c -lasound
+cc -shared -fPIC -o libconsole.so libconsole.c
+```
+
 There is also a startup script in the `src` directory which you can symlink to simplify the use of Mplay, e.g.
 
 ```

@@ -1,6 +1,7 @@
 module console
 
-const libconsole = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libconsole.dll" : "lib/libconsole.dylib")
+const libconsole = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libconsole.dll" :
+                                      Sys.KERNEL == :Linux ? "lib/libconsole.so" : "lib/libconsole.dylib")
 
 function settty()
     ccall((:settty, libconsole),

@@ -53,6 +53,16 @@ static HMIDIOUT midi_out;
 
 #endif
 
+#ifdef __linux__
+
+#include "alsa/asoundlib.h"
+
+#define DLLEXPORT
+
+static snd_rawmidi_t *midi_out = 0;
+
+#endif
+
 static
 void fatal(char *message)
 {
@@ -172,6 +182,10 @@ home:
   if (midiOutOpen(&midi_out, MIDIMAPPER, 0L, 0L, 0L) != 0)
     fatal("cannot open MIDI output");
 #endif
+#ifdef __linux__
+  if (snd_rawmidi_open(NULL, &midi_out, device, 0))
+    fatal("cannot open MIDI output");
+#endif
 }
 
 #ifdef __APPLE__
@@ -245,6 +259,10 @@ DLLEXPORT void midiwrite(unsigned char *buffer, int nbytes)
       midiOutUnprepareHeader(midi_out, &midihdr, sizeof(midihdr));
     }
 #endif
+#ifdef __linux__
+  snd_rawmidi_write(midi_out, buffer, nbytes);
+  snd_rawmidi_drain(midi_out);
+#endif
 }
 
 DLLEXPORT void midiread(unsigned int *timeStamp, unsigned int *event)
@@ -300,6 +318,10 @@ DLLEXPORT void midiclose()
 #endif
 #ifdef _WIN32
   midiOutClose(midi_out);
+#endif
+#ifdef __linux__
+  snd_rawmidi_drain(midi_out);
+  snd_rawmidi_close(midi_out);
 #endif
 }
 

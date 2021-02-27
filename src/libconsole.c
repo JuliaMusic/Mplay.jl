@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <signal.h>
+#include <sys/time.h>
 typedef void (*sighandler_t)(int);
 #endif
 

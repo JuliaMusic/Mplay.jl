@@ -1,6 +1,7 @@
 module midi
 
-const libmidi = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libmidi.dll" : "lib/libmidi.dylib")
+const libmidi = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libmidi.dll" :
+                                   Sys.KERNEL == :Linux ? "lib/libmidi.so" : "lib/libmidi.dylib")
 
 function midiopen(device="")
     ccall((:midiopen, libmidi),
