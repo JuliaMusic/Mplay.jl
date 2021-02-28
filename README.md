@@ -118,3 +118,23 @@ Mplay [-h|--help] [--device=midi-device] [--gui] midi-file
 The text user interface is now enabled by default.
 
 ![Mplay-tui](Mplay-tui.png)
+
+**How to use Mplay with Timidity++ (on Linux)**
+
+Before you start Timidity++, you have to create a virtual MIDI device:
+
+```
+% sudo modprobe snd-virmidi% timidity -iATiMidity starting in ALSA server modeOpening sequencer port: 128:0 128:1 128:2 128:3```
+
+Then, in a second console window, you can setup the MIDI connections and use *Mplay* with the proper device specification, e.g.:
+
+```
+% aconnect 20:0 128:0% aconnect -l
+...
+client 20: 'Virtual Raw MIDI 1-0' [type=kernel,card=1]    0 'VirMIDI 1-0     '	Connecting To: 128:0...
+client 128: 'TiMidity' [type=user,pid=5607]    0 'TiMidity port 0 '	Connected From: 20:0...
+% Mplay --device=hw:1,0 <midi-file>
+```
+
+Please keep in mind: The client/device IDs on your system may differ from those shown here depending on the configuration of your Audio/MIDI interface(s).		
+
