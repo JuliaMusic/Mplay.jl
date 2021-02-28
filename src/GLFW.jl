@@ -4,7 +4,8 @@ include("keys.jl")
 
 using .keys
 
-const libGLFW = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libglfw.dll" : "lib/libglfw.dylib")
+const libGLFW = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libglfw.dll" :
+                                   Sys.KERNEL == :Linux ? "lib/libglfw.so" : "lib/libglfw.dylib")
 
 const PRESS = 1
 export PRESS

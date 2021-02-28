@@ -260,8 +260,10 @@ DLLEXPORT void midiwrite(unsigned char *buffer, int nbytes)
     }
 #endif
 #ifdef __linux__
-  snd_rawmidi_write(midi_out, buffer, nbytes);
-  snd_rawmidi_drain(midi_out);
+  if (nbytes <= 3)
+    {
+      snd_rawmidi_write(midi_out, buffer, nbytes);
+    }
 #endif
 }
 
@@ -301,9 +303,9 @@ DLLEXPORT void midiclose()
 {
 #ifdef __APPLE__
   if (synthUnit)
-    {   
+    {
       if (graph)
-        {   
+        {
           AUGraphStop(graph);
           DisposeAUGraph(graph);
         }
@@ -396,3 +398,13 @@ DLLEXPORT float midisystemload(void)
 }
 
 #endif
+
+#ifdef __linux__
+
+float midisystemload()
+{
+  return -1.0f;
+}
+
+#endif
+
