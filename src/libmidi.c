@@ -6,6 +6,8 @@
  Windows:
    cl /c libmidi.c
    link /out:libmidi.dll libmidi.obj -dll winmm.lib
+ Linux:
+   cc -shared -fPIC -o libmidi.so libmidi.c -lasound
  */
 
 #include <stdio.h>
