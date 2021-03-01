@@ -4,6 +4,8 @@
  Windows:
    cl /c libconsole.c
    link /out:libconsole.dll libconsole.obj
+ Linux:
+   cc -shared -fPIC -o libconsole.so libconsole.c
  */
 
 #if defined(_WIN32)
@@ -44,6 +46,7 @@ static HANDLE std_input, std_output = (HANDLE) NULL;
 static DWORD saved_console_mode;
 static CONSOLE_CURSOR_INFO saved_cursor_info;
 #else
+static int raw_mode = 0;
 static struct termios saved_term;
 static sighandler_t saved_handler = NULL;
 #endif
@@ -59,12 +62,14 @@ void resettty(void)
         SetConsoleMode(std_output, saved_console_mode);
     }
 #else
-    if (saved_handler != NULL) {
+    if (raw_mode) {
+        signal(SIGQUIT, saved_handler);
+        saved_handler = NULL;
+
         if (tcsetattr(0, TCSANOW, &saved_term) < 0)
             perror("tcsetattr");
 
-        signal(SIGQUIT, saved_handler);
-        saved_handler = NULL;
+        raw_mode = 0;
     }
 #endif
 }
@@ -96,7 +101,7 @@ void settty(void)
 #else
     struct termios term;
 
-    if (saved_handler != NULL)
+    if (raw_mode)
         return;
 
     if (tcgetattr(0, &saved_term) < 0)
@@ -107,10 +112,12 @@ void settty(void)
     term.c_lflag &= ~(ECHO | ICANON | ISIG);
     term.c_iflag &= ~(IGNCR | INLCR | ICRNL);
 
-    if (tcsetattr(0, TCSAFLUSH, &term) < 0)
+    if (tcsetattr(0, TCSANOW, &term) < 0)
         perror("tcsetattr");
 
     saved_handler = signal(SIGQUIT, (void (*) (int))resettty);
+
+    raw_mode = 1;
 #endif
 }
 
