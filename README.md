@@ -22,28 +22,29 @@ software synthesizer:
 * Mixer with mute and solo options
 * Ability to change channel parameters (delay, chorus, reverb, pan)
 * Volume sliders
-* Pulldown menus for GM instrument sounds
+* Change GM instrument sounds
 * MIDI VU meter
 * Show note, chord and lyrics information
 * Change key, tempo
 * Transport controls
 * Keyboard shortcuts
+* Support for Roland sound maps (SC-88 Pro, SC-88, and SC-55)
 
-| Key                | Action                     |
-|:------------------:|:--------------------------:|
-| a                  | un-mute all channels       |
-| b/B                | toggle/solo bass           |
-| d/D                | toggle/solo drums          |
-| g/G                | toggle/solo guitar(s)      |
-| k/K                | toggle/solo keyboard(s)    |
-| 1234567890!@#$%^   | toggle channel 1-16        |
-| -/+                | decrease/increase tempo    |
-| SPACE              | stop/resume song           |
-| TAB                | select next channel        |
-| > <                | transpose up/down, or      |
-|                    | next/previous instrument   |
-|                    | (if a channel is selected) |
-| ESC                | quit Mplay                 |
+| Key                | Action                      |
+|:------------------:|:---------------------------:|
+| a                  | un-mute all channels        |
+| b/B                | toggle/solo bass            |
+| d/D                | toggle/solo drums           |
+| g/G                | toggle/solo guitar(s)       |
+| k/K                | toggle/solo keyboard(s)     |
+| 1234567890!@#$%^   | toggle channel 1-16         |
+| -/+                | decrease/increase tempo     |
+| SPACE              | stop/resume song            |
+| TAB                | select next channel         |
+| > <                | transpose up/down, or       |
+|                    | next/previous GM instrument |
+|                    | (if a channel is selected)  |
+| ESC                | quit Mplay                  |
 
 **Installation:**
 
@@ -124,17 +125,28 @@ The text user interface is now enabled by default.
 Before you start Timidity++, you have to create a virtual MIDI device:
 
 ```
-% sudo modprobe snd-virmidi% timidity -iATiMidity starting in ALSA server modeOpening sequencer port: 128:0 128:1 128:2 128:3```
+% sudo modprobe snd-virmidi
+% timidity -iA
+TiMidity starting in ALSA server mode
+Opening sequencer port: 128:0 128:1 128:2 128:3
+```
 
 Then, in a second console window, you can setup the MIDI connections and use *Mplay* with the proper device specification, e.g.:
 
 ```
-% aconnect 20:0 128:0% aconnect -l
+% aconnect 20:0 128:0
+% aconnect -l
 ...
-client 20: 'Virtual Raw MIDI 1-0' [type=kernel,card=1]    0 'VirMIDI 1-0     '	Connecting To: 128:0...
-client 128: 'TiMidity' [type=user,pid=5607]    0 'TiMidity port 0 '	Connected From: 20:0...
+client 20: 'Virtual Raw MIDI 1-0' [type=kernel,card=1]
+    0 'VirMIDI 1-0     '
+	Connecting To: 128:0
+...
+client 128: 'TiMidity' [type=user,pid=...]
+    0 'TiMidity port 0 '
+	Connected From: 20:0
+...
 % Mplay --device=hw:1,0 <midi-file>
 ```
 
-Please keep in mind: The client/device IDs on your system may differ from those shown here depending on the configuration of your Audio/MIDI interface(s).		
+Please keep in mind: The client/device IDs on your system may differ from those shown here depending on the configuration of your Audio/MIDI interface(s).
 
