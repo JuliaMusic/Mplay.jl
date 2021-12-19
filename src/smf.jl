@@ -756,7 +756,7 @@ function setpart(smf, part; info...)
         name, program, variation = instruments[info[:instrument]]
         smf.info[part].instrument = info[:instrument]
         smf.info[part].name = name
-        writemidi(smf, UInt8[0xb0 + channel, 0x20, !gm1 ? 0 : 2]) # 0=default, 1=SC-55, 2=SC-88
+        writemidi(smf, UInt8[0xb0 + channel, 0x20, gm1 ? 0 : 2]) # 0=default, 1=SC-55, 2=SC-88
         writemidi(smf, UInt8[0xb0 + channel, 0x00, variation])
         writemidi(smf, UInt8[0xc0 + channel, program])
         smf.preset[part].instrument = program
@@ -937,7 +937,7 @@ function play(smf, device="")
                     info.family = families[div(program, 8) + 1]
                 elseif byte1 == 32
                     bank[part] |= byte2
-                    byte2 = !gm1 ? 0 : 2 # 0=default, 1=SC-55, 2=SC-88
+                    byte2 = gm1 ? 0 : 2 # 0=default, 1=SC-55, 2=SC-88
                 elseif byte1 == 7
                     preset.level != -1 && (byte2 = preset.level)
                     info.level = byte2
