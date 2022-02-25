@@ -139,7 +139,25 @@ DLLEXPORT void midiopen(char *device)
 
       __Require_noErr (result = AUGraphNodeInfo(graph, synthNode, 0, &synthUnit), home);
 
-      __Require_noErr (result = AUGraphInitialize (graph), home);
+      const char *sfPath = getenv("MPLAY_SOUNDFONT");
+      if (sfPath != NULL)
+        {
+          CFURLRef url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (const UInt8 *) sfPath, strlen(sfPath), false);
+
+          __Require_noErr(result = AudioUnitSetProperty(synthUnit, kMusicDeviceProperty_SoundBankURL, kAudioUnitScope_Global, 0, &url, sizeof(url)), home);
+
+          CFRelease(url);
+
+          __Require_noErr(result = AUGraphInitialize (graph), home);
+
+          // Prepare MIDI soundbank
+          MusicDeviceMIDIEvent(synthUnit, 0xB0, 0, 0, 0);
+        }
+      else
+        {
+          __Require_noErr(result = AUGraphInitialize (graph), home);
+        }
+
       __Require_noErr (result = AUGraphStart (graph), home);
     }
   else
