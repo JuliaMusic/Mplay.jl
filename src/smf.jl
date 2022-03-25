@@ -38,10 +38,23 @@ const families = (
     "Reed", "Pipe", "Synth Lead", "Synth Pad",
     "Synth Effects", "Ethnic", "Percussive", "Sound Effects")
 
+const isdrum = (
+    false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, true,
+    true,  true,  true,  false, true,  true,  true,  true,  true,  true,  true,  true,
+    true,  true,  true,  true,  true,  true,  false, true,  false, true,  false, true,
+    false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false)
+
 const drum_instruments = (
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "Acoustic Bass Drum",
+    "", "", "", "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "", "", "", "", "Acoustic Bass Drum",
     "Bass Drum 1", "Side Stick", "Acoustic Snare", "Hand Clap",
     "Electric Snare", "Low Floor Tom", "Closed Hi-Hat", "High Floor Tom",
     "Pedal Hi-Hat", "Low Tom", "Open Hi-Hat", "Low-Mid Tom",
@@ -55,8 +68,9 @@ const drum_instruments = (
     "Hi Wood Block", "Low Wood Block", "Mute Cuica", "Open Cuica",
     "Mute Triangle", "Open Triangle", "", "",
     "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    "", "", "", "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "")
 
 const keys = ("Cb", "Gb", "Db", "Ab", "Eb", "Bb", " F",
               " C", " G", " D", " A", " E", " B", "F#",
@@ -221,6 +235,7 @@ mutable struct SMF
     key::Int
     key_shift::Int
     mode::Int
+    percussion::Bool
     info::Array{Part}
     preset::Array{Arrangement}
 end
@@ -233,7 +248,7 @@ function StandardMidiFile()
     preset = Array{Any}(undef,16)
     smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, lyrics, 0, 1,
               0, -1, 0, 0, 0, 384, 120, 0, "", 1, 1, 0, "", [], div(60000000,120),
-              4, 4, 24, 8, 8, 0, 2, info, preset)
+              4, 4, 24, 8, 8, 0, 2, true, info, preset)
     for part in 1:16
         smf.info[part] = Part(false, false, "", part - 1, 1, "", 0, 100, 64,
                               40, 0, 0, 64, 64, 0, 0, [])
@@ -906,6 +921,14 @@ function play(smf, device="")
                     if soft_shift
                         byte1 += info.shift - 64
                     end
+                elseif !smf.percussion
+                    if !isdrum[byte1]
+                        smf.next += 1
+                        continue
+                    end
+                elseif byte1 >= 70 # TODO
+                    smf.next += 1
+                    continue
                 end
             end
             if me_type == 0x80

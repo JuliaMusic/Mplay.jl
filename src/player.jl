@@ -129,6 +129,8 @@ function dispatch(player, key)
             player.muted[part] = !player.muted[part]
             change_mute_state(player, player.selection)
         end
+    elseif key == 'p'
+        player.midi.percussion = !player.midi.percussion
     elseif haskey(MUTE_ON_OFF, key)
         for part in 1:16
             info = partinfo(player.midi, part)
