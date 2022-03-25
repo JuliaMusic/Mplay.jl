@@ -4,7 +4,7 @@ using Printf
 
 using ..midi
 
-export setopts, readsmf, loadarrangement, savearrangement, play,
+export setkorgmode, readsmf, loadarrangement, savearrangement, play,
        fileinfo, songinfo, beatinfo, chordinfo, getprogram,
        setsong, partinfo, setpart, allnotesoff, allsoundoff, cpuload
 export midi
@@ -438,14 +438,11 @@ function readevents(smf)
 end
 
 
-function setopts(opts)
+function setkorgmode()
     global korg, drum_channel, drumkit, bank
-    korg = "-korg" ∈ opts
-    if korg
-        drumkit = zeros(Int, 16)
-        bank = zeros(Int, 16)
-        drum_channel = 9
-    end
+    drumkit = zeros(Int, 16)
+    bank = zeros(Int, 16)
+    drum_channel = 9
 end
 
 

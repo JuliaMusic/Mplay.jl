@@ -62,9 +62,21 @@ function update(player, smf)
     outtextxy(1, 24, chord)
 end
 
-function mplay(path, device="")
+function mplay(path, device="", opts="")
     player = MidiPlayer(path)
     smf = player.midi
+
+    for opt in opts
+        if "--korg" ∈ opts
+            setkorgmode()
+        elseif match(r"[-+]\d+", opt) !== nothing
+            smf.key_shift = parse(Int, opt)
+        else
+            for key in opt
+                dispatch(player, key)
+            end
+        end
+    end
 
     raw_mode = false
     while true
@@ -110,8 +122,7 @@ function main()
             if file == nothing
                 break
             end
-            setopts(opts)
-            mplay(file, device)
+            mplay(file, device, opts)
         end
     else
         mplay(path, device)
