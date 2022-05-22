@@ -66,15 +66,21 @@ function mplay(path, device="", opts="")
     player = MidiPlayer(path)
     smf = player.midi
 
+    transpose = false
     for opt in opts
-        if "--korg" ∈ opts
-            setkorgmode()
-        elseif match(r"[-+]\d+", opt) !== nothing
+        if transpose
             smf.key_shift = parse(Int, opt)
-        else
-            for key in opt
+            transpose = false
+        elseif opt == "--korg"
+            setkorgmode()
+        elseif opt == "-t"
+            transpose = true
+        elseif match(r"[-][bdg\d]", opt) !== nothing
+            for key in opt[2:end]
                 dispatch(player, key)
             end
+        else
+            println("unknown option: $opt")
         end
     end
 
