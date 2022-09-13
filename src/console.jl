@@ -52,4 +52,15 @@ function cls()
 end
 export cls
 
+function winsz()
+    lines = Cint[0]
+    columns = Cint[0]
+    ccall((:winsz, libconsole),
+          Nothing,
+          (Ptr{Cint}, Ptr{Cint}),
+          lines, columns)
+    return lines[1], columns[1]
+end
+export winsz
+
 end

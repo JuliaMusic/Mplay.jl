@@ -3,7 +3,7 @@
    cc -shared -arch arm64 -arch x86_64 -o libconsole.dylib libconsole.c
  Windows:
    cl /c libconsole.c
-   link /out:libconsole.dll libconsole.obj
+   link /dll /out:libconsole.dll libconsole.obj
  Linux:
    cc -shared -fPIC -o libconsole.so libconsole.c
  */
@@ -17,6 +17,7 @@
 #include <termios.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 typedef void (*sighandler_t)(int);
 #endif
 
@@ -238,3 +239,22 @@ void cls(void)
     fflush(stdout);
 #endif
 }
+
+void winsz(int *lines, int *columns)
+{
+#if defined(_WIN32)
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+    GetConsoleScreenBufferInfo(std_output, &csbi);
+
+    *lines = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    *columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+#else
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+    *lines = w.ws_row;
+    *columns = w.ws_col;
+#endif
+}
+

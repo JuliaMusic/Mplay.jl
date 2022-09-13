@@ -34,8 +34,9 @@ function openfiledialog(path)
     if length(songs) > 0
         settty()
         cls()
+        lines, colums = winsz()
         while true
-            last = first + min(23, length(songs) - 1)
+            last = first + min(lines-1, length(songs) - 1)
             for index in first:last
                 outtextxy(1, index - scrolled, rpad(songs[index][1], 80))
             end
