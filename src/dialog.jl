@@ -64,9 +64,13 @@ function openfiledialog(path)
         cls()
         if current > 0
             args = split(songs[current][2])
-            file = joinpath(path, lowercase(args[end]))
-            opts = args[1:end-1]
-            song = (file, opts)
+            if length(args) > 0
+                file = joinpath(path, lowercase(args[end]))
+                opts = args[1:end-1]
+                song = (file, opts)
+            else
+                song = ("", "")
+            end
         else
             song = (nothing, nothing)
         end

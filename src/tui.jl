@@ -128,7 +128,9 @@ function main()
             if file == nothing
                 break
             end
-            mplay(file, device, opts)
+            if length(file) > 0
+                mplay(file, device, opts)
+            end
         end
     else
         mplay(path, device)
