@@ -102,7 +102,9 @@ void readProc(const MIDIPacketList *newPackets, void *refCon,
 DLLEXPORT void midiopen(char *device)
 {
 #ifdef __APPLE__
-  if (strcmp(device, "dlss") == 0 || strcmp(device, "scva") == 0 || MIDIGetDestination(0) == 0 )
+  int sourceIndex = 0, destIndex = 0;
+
+  if (strcmp(device, "dlss") == 0 || strcmp(device, "scva") == 0 || *device == '\0')
     {
       AUNode synthNode, outNode;
       AudioComponentDescription cd;
@@ -162,37 +164,74 @@ DLLEXPORT void midiopen(char *device)
     }
   else
     {
-      int index;
-      char name[255];
+      char *sourceName, *destName;
       CFStringRef displayName;
+      char name[255];
       void *conRef = NULL;
 
       if (*device != '\0')
-        index = atoi(device);
-      else
-        index = MIDIGetNumberOfDestinations() - 1;
+        {
+          int index;
 
-      if (MIDIClientCreate(CFSTR("Mplay"), NULL, NULL, &client) != noErr)
+          sourceName = strtok(device, ":");
+          sourceIndex = -1;
+          for (index = 0; sourceName != NULL && index < MIDIGetNumberOfSources(); index++)
+            {
+              dest = MIDIGetSource(index);
+              MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+              CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+              if (strcmp(sourceName, name) == 0)
+                {
+                  sourceIndex = index;
+                  break;
+                }
+            }
+
+          destName = strtok(NULL, ":");
+          destIndex = -1;
+          for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
+            {
+              dest = MIDIGetDestination(index);
+              MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+              CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+              if (strcmp(destName, name) == 0)
+                {
+                  destIndex = index;
+                  break;
+                }
+            }
+        }
+
+      if (MIDIClientCreate(CFSTR("libMidi"), NULL, NULL, &client) != noErr)
         fatal("cannot create MIDI client");
 
-      if (MIDIOutputPortCreate(client, CFSTR("Output port"), &output_port) != noErr)
-        fatal("cannot create MIDI output port");
-      if ((dest = MIDIGetDestination(index)) == 0)
-        fatal("cannot get MIDI destination");
-
-      MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
-      CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
-      printf("MIDI destination:  %s\n", name);
-
-      if (MIDIInputPortCreate(client, CFSTR("Input port"), readProc, NULL, &input_port) != noErr)
-        fatal("cannot create MIDI input port");
-
-      if ((src = MIDIGetSource(index)) == 0)
-        fprintf(stderr, "cannot get MIDI source\n");
-      else
+      if (destIndex >= 0)
         {
-          if (MIDIPortConnectSource(input_port, src, conRef) != noErr)
-            fatal("cannot connect MIDI input source");
+          if (MIDIOutputPortCreate(client, CFSTR("Output port"), &output_port) != noErr)
+            fatal("cannot create MIDI output port");
+          if ((dest = MIDIGetDestination(destIndex)) == 0)
+            fatal("cannot get MIDI destination");
+
+          MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+          CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+          printf("MIDI destination:  %s\n", name);
+        }
+
+      if (sourceIndex >= 0)
+        {
+          if (MIDIInputPortCreate(client, CFSTR("Input port"), readProc, NULL, &input_port) != noErr)
+            fatal("cannot create MIDI input port");
+          if ((src = MIDIGetSource(sourceIndex)) == 0)
+            fprintf(stderr, "cannot get MIDI source\n");
+          else
+            {
+              if (MIDIPortConnectSource(input_port, src, conRef) != noErr)
+                fatal("cannot connect MIDI input source");
+            }
+
+          MIDIObjectGetStringProperty(src, kMIDIPropertyDisplayName, &displayName);
+          CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+          printf("MIDI source:  %s\n", name);
         }
     }
 home:
@@ -295,7 +334,7 @@ DLLEXPORT void midiread(unsigned int *timeStamp, unsigned int *event)
     {
       *timeStamp = midiEvent[readIndex].timeStamp;
       *event = midiEvent[readIndex].data;
-      readIndex++;
+      readIndex = (readIndex + 1) % 256;
     }
 #endif
 }

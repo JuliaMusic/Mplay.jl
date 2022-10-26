@@ -28,6 +28,17 @@ function mididataset1(address, data)
 end
 export mididataset1
 
+function midiread()
+    timestamp = Cuint[0]
+    event = Cuint[0]
+    ccall((:midiread, libmidi),
+          Nothing,
+          (Ptr{UInt32}, Ptr{UInt32}),
+          timestamp, event)
+    return timestamp[1], event[1]
+end
+export midiread
+
 function midiclose()
     ccall((:midiclose, libmidi),
           Nothing,
