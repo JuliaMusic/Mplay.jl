@@ -3,6 +3,14 @@ module midi
 const libmidi = joinpath(@__DIR__, Sys.KERNEL == :NT ? "lib/libmidi.dll" :
                                    Sys.KERNEL == :Linux ? "lib/libmidi.so" : "lib/libmidi.dylib")
 
+function midiprobe(device)
+    ret = ccall((:midiprobe, libmidi),
+                Int32,
+                (Ptr{UInt8}, ),
+                device)
+end
+export midiprobe
+
 function midiopen(device="")
     ccall((:midiopen, libmidi),
           Nothing,

@@ -99,6 +99,49 @@ void readProc(const MIDIPacketList *newPackets, void *refCon,
 }
 #endif
 
+DLLEXPORT int midiprobe(char *device)
+{
+#ifdef __APPLE__
+  int sourceIndex = 0, destIndex = 0;
+  char *sourceName, *destName;
+  CFStringRef displayName;
+  char name[255];
+  void *conRef = NULL;
+  int index;
+
+  sourceName = strtok(device, ":");
+  if (sourceName != NULL) sourceIndex = -1;
+  for (index = 0; sourceName != NULL && index < MIDIGetNumberOfSources(); index++)
+    {
+      dest = MIDIGetSource(index);
+      MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+      CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+      if (strcmp(sourceName, name) == 0)
+        {
+          sourceIndex = index;
+          break;
+        }
+    }
+
+  destName = strtok(NULL, ":");
+  if (destName != NULL) destIndex = -1;
+  for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
+    {
+      dest = MIDIGetDestination(index);
+      MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+      CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+      if (strcmp(destName, name) == 0)
+        {
+          destIndex = index;
+          break;
+        }
+    }
+
+  return sourceIndex >= 0 && destIndex >= 0;
+#endif
+  return 0;
+}
+
 DLLEXPORT void midiopen(char *device)
 {
 #ifdef __APPLE__
