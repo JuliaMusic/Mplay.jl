@@ -10,6 +10,7 @@ function realpath {
 }
 
 MPLAY_HOME=$(dirname $(realpath "$0"))
+julia="${JULIA:-julia}"
 
 function usage()
 {
@@ -49,4 +50,4 @@ if [ "$file" == "" ]; then
     exit 1
 fi
 
-env MIDI_DEVICE=${device} julia ${MPLAY_HOME}/${interface}.jl "${file}"
+env MIDI_DEVICE=${device} ${julia} ${MPLAY_HOME}/${interface}.jl "${file}"
