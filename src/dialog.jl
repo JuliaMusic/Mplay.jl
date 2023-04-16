@@ -3,6 +3,8 @@ module dialog
 include("console.jl")
 include("keys.jl")
 
+using DelimitedFiles
+
 using .console
 using .keys
 
@@ -27,6 +29,10 @@ function openfiledialog(path)
     global first, current, scrolled
     if isfile(joinpath(path, "index.txt"))
         songs = readindex(joinpath(path, "index.txt"))
+        if isfile(joinpath(path, "set.txt"))
+            set = readdlm(joinpath(path, "set.txt"), ',', Int)
+            songs = songs[set]
+        end
     else
         files = filter(x->endswith(lowercase(x), ".mid"), readdir(path))
         songs = zip(files, files) |> collect
