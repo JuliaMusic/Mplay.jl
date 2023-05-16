@@ -11,6 +11,7 @@
 #if defined(_WIN32)
 #include <windows.h>
 #include <commdlg.h>
+#define DLLEXPORT __declspec(dllexport)
 #else
 #include <stdio.h>
 #include <unistd.h>
@@ -19,6 +20,7 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 typedef void (*sighandler_t)(int);
+#define DLLEXPORT
 #endif
 
 #define KEY_F1    290
@@ -52,7 +54,7 @@ static struct termios saved_term;
 static sighandler_t saved_handler = NULL;
 #endif
 
-void resettty(void)
+DLLEXPORT void resettty(void)
 {
 #if defined(_WIN32)
     COORD cursor = { 0, 0 };
@@ -75,7 +77,7 @@ void resettty(void)
 #endif
 }
 
-void settty(void)
+DLLEXPORT void settty(void)
 {
 #if defined(_WIN32)
     COORD cursor = { 0, 0 };
@@ -122,7 +124,7 @@ void settty(void)
 #endif
 }
 
-int kbhit(void)
+DLLEXPORT int kbhit(void)
 {
 #if defined(_WIN32)
     INPUT_RECORD input_event;
@@ -139,7 +141,7 @@ int kbhit(void)
 #endif
 }
 
-unsigned int readchar(void)
+DLLEXPORT unsigned int readchar(void)
 {
     unsigned int key = 0;
 #if defined(_WIN32)
@@ -199,7 +201,7 @@ unsigned int readchar(void)
     return key;
 }
 
-void outtextxy(int x, int y, char *s, int color)
+DLLEXPORT void outtextxy(int x, int y, char *s, int color)
 {
 #if defined(_WIN32)
     wchar_t w_s[255];
@@ -222,7 +224,7 @@ void outtextxy(int x, int y, char *s, int color)
 #endif
 }
 
-void cls(void)
+DLLEXPORT void cls(void)
 {
 #if defined(_WIN32)
     CONSOLE_SCREEN_BUFFER_INFO info;
@@ -240,7 +242,7 @@ void cls(void)
 #endif
 }
 
-void winsz(int *lines, int *columns)
+DLLEXPORT void winsz(int *lines, int *columns)
 {
 #if defined(_WIN32)
     CONSOLE_SCREEN_BUFFER_INFO csbi;
