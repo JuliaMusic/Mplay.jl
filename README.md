@@ -103,6 +103,12 @@ cc -shared -fPIC -o libmidi.so libmidi.c -lasound
 cc -shared -fPIC -o libconsole.so libconsole.c
 ```
 
+You should then move those binaries to the `lib` directory. On Windows systems, you might have to set the PATH accordingly:
+
+```
+set PATH=%PATH%;.\lib
+```
+ 
 There is also a startup script in the `src` directory which you can symlink to simplify the use of Mplay, e.g.
 
 ```
