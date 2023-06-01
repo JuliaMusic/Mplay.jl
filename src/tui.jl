@@ -27,6 +27,14 @@ const intensities = (
 
 include("player.jl")
 
+function __init__()
+    if Sys.KERNEL == :NT
+        lib= joinpath(@__DIR__, "lib")
+        chmod(joinpath(lib, "libconsole.dll"), 0o755)
+        chmod(joinpath(lib, "libmidi.dll"), 0o755)
+    end
+end
+
 function showlyrics(smf)
     if 1 <= smf.line <= length(smf.lyrics)
         outtextxy(1, 22, rpad(smf.lyrics[smf.line], 80))

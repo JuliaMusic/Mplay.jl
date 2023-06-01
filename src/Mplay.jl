@@ -23,6 +23,14 @@ const shortcuts = Dict(
     GLFW.KEY_LEFT => KEY_LEFT,
     GLFW.KEY_RIGHT => KEY_RIGHT )
 
+function __init__()
+    if Sys.KERNEL == :NT
+        lib= joinpath(@__DIR__, "lib")
+        chmod(joinpath(lib, "libglfw.dll"), 0o755)
+        chmod(joinpath(lib, "libmidi.dll"), 0o755)
+    end
+end
+
 function read_image(path)
     f = open(path)
     readline(f)  # magic number
