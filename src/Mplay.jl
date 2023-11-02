@@ -43,6 +43,7 @@ function read_image(path)
 end
 
 function copy_pixels(tox, toy, w, h, fromx, fromy)
+    fromy += 110 # height of the fretboard image
     glEnable(GL_TEXTURE_2D)
     glBegin(GL_QUADS)
     glTexCoord2i(fromx, fromy)
