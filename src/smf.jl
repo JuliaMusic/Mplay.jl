@@ -128,7 +128,7 @@ function getinstrument(part, program, variation)
     global firstdrumset
     if part == 10
         if firstdrumset == 0
-            for i in 1:length(instruments)
+            for i in eachindex(instruments)
                 if startswith(instruments[i][1], "STANDARD")
                     firstdrumset = i
                     break
@@ -139,9 +139,11 @@ function getinstrument(part, program, variation)
     else
         first = 1
     end
-    for i in first:length(instruments)
-        if program == instruments[i][2] && variation == instruments[i][3]
-             return i
+    for i in eachindex(instruments)
+        if i >= first
+            if program == instruments[i][2] && variation == instruments[i][3]
+                return i
+            end
         end
     end
     return program
