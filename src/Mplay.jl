@@ -113,11 +113,21 @@ function paint_keyboard_notes(notes)
 end
 
 function paint_fretboard_notes(notes)
+    frets = falses(6, 12)
     for string = 1:6
-        for fret = 0:12
-            note = (BASE_NOTES[string] + fret) % 12
+        for fret = 1:12
+            note = (BASE_NOTES[string] + fret - 1) % 12
             if note in (notes .% 12)
-                draw_rect(FRET_POSITIONS[fret - 1] - 3, STRING_POSITIONS[string] - 3, 6, 6)
+                frets[string,fret] = true
+            end
+        end
+    end
+    for string = 1:6
+        match = false
+        for fret = 1:12
+            if frets[string,fret] && !match
+                draw_rect(FRET_POSITIONS[fret] - 3, STRING_POSITIONS[string] - 3, 6, 6)
+                match = true
             end
         end
     end
