@@ -15,6 +15,10 @@ using .keys
 
 include("player.jl")
 
+FRET_POSITIONS = [27, 56, 106, 155, 199, 242, 283, 321, 358, 391, 423, 453, 482, 508, 533, 558, 581, 602, 622, 641, 659, 677, 693]
+STRING_POSITIONS = [6, 25, 46, 65, 84, 104]
+BASE_NOTES = [40, 45, 50, 55, 59, 64]
+
 const shortcuts = Dict(
     GLFW.KEY_ESCAPE => Int('\e'),
     GLFW.KEY_TAB => Int('\t'),
@@ -96,7 +100,7 @@ function draw_rect(x, y, width, height)
     glColor3d(1, 1, 1)
 end
 
-function paint_notes(notes)
+function paint_keyboard_notes(notes)
     key = (2, 10, 20, 33, 39, 57, 66, 76, 86, 94, 107, 113)
     for note in notes
         x = 312 + key[note % 12 + 1]
@@ -104,6 +108,17 @@ function paint_notes(notes)
             draw_rect(x, 48, 7, 24)
         else
             draw_rect(x, 14, 10, 24)
+        end
+    end
+end
+
+function paint_fretboard_notes(notes)
+    for string = 1:6
+        for fret = 0:12
+            note = (BASE_NOTES[string] + fret) % 12
+            if note in (notes .% 12)
+                draw_rect(FRET_POSITIONS[fret - 1] - 3, STRING_POSITIONS[string] - 3, 6, 6)
+            end
         end
     end
 end
@@ -164,7 +179,12 @@ function update(player)
     showlyrics(player.midi)
     chord, notes = chordinfo(player.midi)
     draw_text(15, 117, chord)
-    paint_notes(notes)
+    if player.fretboard
+        copy_pixels(0, 0, 730, 110, 0, 650)
+        paint_fretboard_notes(notes)
+    else
+        paint_keyboard_notes(notes)
+    end
     text = "Julia MIDI Player  @ 2018-2020 by Josef Heinen"
     scrolling_text = " " ^ 12 * text * " "
     scrolling_text = unsafe_wrap(Array{UInt8, 1}, pointer(scrolling_text),
@@ -185,7 +205,9 @@ function update(player)
     else
         copy_pixels(665, 251, 10, 10, 860, 604)
     end
-    draw_rect(10, 2, round(Int, 710 * player.midi.at / player.midi.atend), 3)
+    if !player.fretboard
+        draw_rect(10, 2, round(Int, 710 * player.midi.at / player.midi.atend), 3)
+    end
     draw_text(695, 177, "CPU")
     draw_rect(703, 120, 5, round(Int, 50 * cpuload()))
 end

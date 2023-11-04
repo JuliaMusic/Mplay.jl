@@ -15,13 +15,14 @@ mutable struct Player
     selection::Int
     parameter::Int
     pause::Bool
+    fretboard::Bool
 end
 
 function MidiPlayer(path)
     if isfile(path)
         smf = readsmf(path)
         loadarrangement(smf, path)
-        player = Player(smf, falses(16), falses(16), false, 0, 1, false)
+        player = Player(smf, falses(16), falses(16), false, 0, 1, false, false)
     else
         println("Can't open $path")
         exit(1)
@@ -123,6 +124,8 @@ function dispatch(player, key)
         change_mute_state(player, 10)
     elseif key == 'D'
         change_solo_state(player, 10)
+    elseif key == 'f'
+        player.fretboard = !player.fretboard
     elseif key == 'm'
         if player.selection > 0
             part = player.selection
