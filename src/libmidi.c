@@ -123,7 +123,10 @@ DLLEXPORT int midiprobe(char *device)
         }
     }
 
-  destName = strtok(NULL, ":");
+  if (strchr(device, ':') != NULL)
+    destName = strtok(NULL, ":");
+  else
+    destName = sourceName;
   if (destName != NULL) destIndex = -1;
   for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
     {
@@ -230,7 +233,10 @@ DLLEXPORT void midiopen(char *device)
                 }
             }
 
-          destName = strtok(NULL, ":");
+          if (strchr(device, ':') != NULL)
+            destName = strtok(NULL, ":");
+          else
+            destName = sourceName;
           destIndex = -1;
           for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
             {
