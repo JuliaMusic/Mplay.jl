@@ -171,90 +171,83 @@ function printable(chars)
     return result
 end
 
-mutable struct Part
-    used::Bool
-    muted::Bool
-    name::String
-    channel::Int
-    instrument::Int
-    family::String
-    variation::Int
-    level::Int
-    pan::Int
-    reverb::Int
-    chorus::Int
-    delay::Int
-    sense::Int
-    shift::Int
-    velocity::Int
-    intensity::Int
-    notes::Array{Int}
+@kwdef mutable struct Part
+    used::Bool = false
+    muted::Bool = false
+    name::String = ""
+    channel::Int = 0
+    instrument::Int = 1
+    family::String = ""
+    variation::Int = 0
+    level::Int = 100
+    pan::Int = 64
+    reverb::Int = 40
+    chorus::Int = 0
+    delay::Int = 0
+    sense::Int = 64
+    shift::Int = 64
+    velocity::Int = 0
+    intensity::Int = 0
+    notes::Array{Int} = []
 end
 
-mutable struct Arrangement
-    muted::Int
-    channel::Int
-    instrument::Int
-    variation::Int
-    level::Int
-    pan::Int
-    reverb::Int
-    chorus::Int
-    delay::Int
-    sense::Int
-    shift::Int
+@kwdef mutable struct Arrangement
+    muted::Int = -1
+    channel::Int = -1
+    instrument::Int = -1
+    variation::Int = -1
+    level::Int = -1
+    pan::Int = -1
+    reverb::Int = -1
+    chorus::Int = -1
+    delay::Int = -1
+    sense::Int = -1
+    shift::Int = -1
 end
 
-mutable struct SMF
-    path::AbstractString
-    format::Int
-    tracks::Int
-    mf::Array{UInt8}
-    off::Int
-    ev::Array{Array{Any}}
-    lyrics::Array{Any}
-    midi_clock::Int
-    next::Int
-    at::Float64
-    start::Float64
-    atend::Float64
-    elapsed_time::Float64
-    pause::Float64
-    division::Int
-    bpm::Int
-    playing_time::Float64
-    text::String
-    line::Int
-    column::Int
-    skiplines::Int
-    chord::String
-    notes::Array{Any}
-    tempo::Int
-    numerator::Int
-    denominator::Int
-    clocks_per_beat::Int
-    notes_per_quarter::Int
-    key::Int
-    key_shift::Int
-    mode::Int
-    percussion::Bool
-    info::Array{Part}
-    preset::Array{Arrangement}
+@kwdef mutable struct SMF
+    path::AbstractString = ""
+    format::Int = 0
+    tracks::Int = 0
+    mf::Array{UInt8} = zeros(UInt8, 0)
+    off::Int = 1
+    ev::Array{Array{Any}} = Array{Array{Any}}(undef, 0)
+    lyrics::Array{Any} = Array{Array{Any}}(undef, 0)
+    midi_clock::Int = 0
+    next::Int = 1
+    at::Float64 = 0
+    start::Float64 = -1
+    atend::Float64 = 0
+    elapsed_time::Float64 = 0
+    pause::Float64 = 0
+    division::Int = 384
+    bpm::Int = 120
+    playing_time::Float64 = 0
+    text::String = ""
+    line::Int = 1
+    column::Int = 1
+    skiplines::Int = 0
+    chord::String = ""
+    notes::Array{Any} = []
+    tempo::Int = div(60000000, 120)
+    numerator::Int = 4
+    denominator::Int = 4
+    clocks_per_beat::Int = 24
+    notes_per_quarter::Int = 8
+    key::Int = 8
+    key_shift::Int = 0
+    mode::Int = 2
+    percussion::Bool = true
+    info::Array{Part} = Array{Any}(undef, 16)
+    preset::Array{Arrangement} = Array{Any}(undef, 16)
 end
 
 
 function StandardMidiFile()
-    ev = Array{Array{Any}}(undef,0)
-    lyrics = Array{Array{Any}}(undef,0)
-    info = Array{Any}(undef,16)
-    preset = Array{Any}(undef,16)
-    smf = SMF("", 0, 0, zeros(UInt8,0), 1, ev, lyrics, 0, 1,
-              0, -1, 0, 0, 0, 384, 120, 0, "", 1, 1, 0, "", [], div(60000000,120),
-              4, 4, 24, 8, 8, 0, 2, true, info, preset)
+    smf = SMF()
     for part in 1:16
-        smf.info[part] = Part(false, false, "", part - 1, 1, "", 0, 100, 64,
-                              40, 0, 0, 64, 64, 0, 0, [])
-        smf.preset[part] = Arrangement(-ones(11)...)
+        smf.info[part] = Part(channel=part-1)
+        smf.preset[part] = Arrangement()
     end
     smf
 end

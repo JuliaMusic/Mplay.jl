@@ -7,22 +7,22 @@ const SOLO_ON = Dict{Char, Any}(
     'B' => ["Bass"], 'G' => ["Guitar"],
     'K' => ["Piano", "Organ", "Strings", "Ensemble"])
 
-mutable struct Player
-    midi::Any
-    muted::Array{Bool,1}
-    solo::Array{Bool,1}
-    button::Bool
-    selection::Int
-    parameter::Int
-    pause::Bool
-    fretboard::Bool
+@kwdef mutable struct Player
+    midi::Any = nothing
+    muted::Array{Bool,1} = falses(16)
+    solo::Array{Bool,1} = falses(16)
+    button::Bool = false
+    selection::Int = 0
+    parameter::Int = 1
+    pause::Bool = false
+    fretboard::Bool = false
 end
 
 function MidiPlayer(path)
     if isfile(path)
         smf = readsmf(path)
         loadarrangement(smf, path)
-        player = Player(smf, falses(16), falses(16), false, 0, 1, false, false)
+        player = Player(midi=smf)
     else
         println("Can't open $path")
         exit(1)
