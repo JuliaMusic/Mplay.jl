@@ -72,6 +72,8 @@ function update(player, smf)
 end
 
 function mplay(path, device="", opts="")
+    debug = haskey(ENV, "DEBUG")
+
     player = MidiPlayer(path)
     smf = player.midi
 
@@ -101,7 +103,9 @@ function mplay(path, device="", opts="")
             cls()
             raw_mode = true
         end
-        update(player, smf)
+        if !debug
+            update(player, smf)
+        end
         if delta > 0
             sleep(delta)
         end

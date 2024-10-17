@@ -599,7 +599,6 @@ end
 
 function writemidi(smf, buf::Array{UInt8})
     global debug
-    midiwrite(buf)
     if debug
         s = sep = ""
         for byte in buf
@@ -607,7 +606,20 @@ function writemidi(smf, buf::Array{UInt8})
             sep = " "
         end
         println(round(time() - smf.start, digits=4), " ", s)
+    else
+        midiwrite(buf)
     end
+end
+
+
+function dataset1(address, data)
+    global debug
+    if debug
+        println("Dataset1: 0x" * hex(address) * " " * string(data))
+    else
+        mididataset1(address, data)
+    end
+    sleep(0.04)
 end
 
 
@@ -697,7 +709,9 @@ function setsong(smf; info...)
                 allnotesoff(smf, part)
             end
             allsoundoff(smf)
-            midiclose()
+            if !debug
+                midiclose()
+            end
         elseif info[:action] == :pause
             if smf.pause == 0
                 smf.pause = time()
@@ -735,14 +749,12 @@ function setpart(smf, part; info...)
     elseif haskey(info, :sense)
         smf.info[part].sense = info[:sense]
         smf.preset[part].sense = info[:sense]
-        mididataset1(0x40101a + block[part] << 8, info[:sense])
-        sleep(0.04)
+        dataset1(0x40101a + block[part] << 8, info[:sense])
     elseif haskey(info, :shift)
         allnotesoff(smf, part)
         smf.info[part].shift = info[:shift]
         smf.preset[part].shift = info[:shift]
-        mididataset1(0x401016 + block[part] << 8, info[:shift])
-        sleep(0.04)
+        dataset1(0x401016 + block[part] << 8, info[:shift])
     elseif haskey(info, :delay)
         smf.info[part].delay = info[:delay]
         smf.preset[part].delay = info[:delay]
@@ -814,11 +826,11 @@ end
 function play(smf, device="")
     global debug, korg, drum_channel, drumkit, bank
     if smf.start < 0
-        midiopen(device)
-        mididataset1(0x40007f, 0x00)   # GS Reset
-        sleep(0.04)
-        mididataset1(0x400130, 0x04)   # Hall 1
-        sleep(0.04)
+        if !debug
+            midiopen(device)
+        end
+        dataset1(0x40007f, 0x00)   # GS Reset
+        dataset1(0x400130, 0x04)   # Hall 1
         setdrumpart(smf)
         for part in 1:16
             arr = smf.preset[part]
