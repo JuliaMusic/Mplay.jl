@@ -39,7 +39,8 @@ function showlyrics(smf)
     if 1 <= smf.line <= length(smf.lyrics)
         outtextxy(1, 22, rpad(smf.lyrics[smf.line], 80))
         outtextxy(smf.column > 1 ? smf.column - length(smf.text) : smf.column, 22, smf.text, 2)
-        outtextxy(1, 23, rpad(smf.line < length(smf.lyrics) ? smf.lyrics[smf.line + max(smf.skiplines, 1)] : "", 80))
+        nextline = smf.line + max(smf.skiplines, 1)
+        outtextxy(1, 23, rpad(nextline <= length(smf.lyrics) ? smf.lyrics[nextline] : "", 80))
     end
 end
 
