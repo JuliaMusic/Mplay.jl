@@ -103,40 +103,51 @@ DLLEXPORT int midiprobe(char *device)
 {
 #ifdef __APPLE__
   int sourceIndex = 0, destIndex = 0;
-  char *sourceName, *destName;
+  char *sourceName = NULL, *destName = NULL;
   CFStringRef displayName;
   char name[255];
   void *conRef = NULL;
   int index;
 
-  sourceName = strtok(device, ":");
-  if (sourceName != NULL) sourceIndex = -1;
-  for (index = 0; sourceName != NULL && index < MIDIGetNumberOfSources(); index++)
+  if (strchr(device, ':') != NULL)
     {
-      dest = MIDIGetSource(index);
-      MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
-      CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
-      if (strcmp(sourceName, name) == 0)
+      sourceName = strtok(device, ":");
+      destName = strtok(NULL, ":");
+    }
+  else
+    {
+      destName = device;
+    }
+
+  if (sourceName != NULL)
+    {
+      sourceIndex = -1;
+      for (index = 0; sourceName != NULL && index < MIDIGetNumberOfSources(); index++)
         {
-          sourceIndex = index;
-          break;
+          dest = MIDIGetSource(index);
+          MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+          CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+          if (strcmp(sourceName, name) == 0)
+            {
+              sourceIndex = index;
+              break;
+            }
         }
     }
 
-  if (strchr(device, ':') != NULL)
-    destName = strtok(NULL, ":");
-  else
-    destName = sourceName;
-  if (destName != NULL) destIndex = -1;
-  for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
+  if (destName != NULL)
     {
-      dest = MIDIGetDestination(index);
-      MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
-      CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
-      if (strcmp(destName, name) == 0)
+      destIndex = -1;
+      for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
         {
-          destIndex = index;
-          break;
+          dest = MIDIGetDestination(index);
+          MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+          CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+          if (strcmp(destName, name) == 0)
+            {
+              destIndex = index;
+              break;
+            }
         }
     }
 
@@ -210,7 +221,7 @@ DLLEXPORT void midiopen(char *device)
     }
   else
     {
-      char *sourceName, *destName;
+      char *sourceName = NULL, *destName = NULL;
       CFStringRef displayName;
       char name[255];
       void *conRef = NULL;
@@ -219,34 +230,45 @@ DLLEXPORT void midiopen(char *device)
         {
           int index;
 
-          sourceName = strtok(device, ":");
-          sourceIndex = -1;
-          for (index = 0; sourceName != NULL && index < MIDIGetNumberOfSources(); index++)
+          if (strchr(device, ':') != NULL)
             {
-              dest = MIDIGetSource(index);
-              MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
-              CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
-              if (strcmp(sourceName, name) == 0)
+              sourceName = strtok(device, ":");
+              destName = strtok(NULL, ":");
+            }
+          else
+            {
+              destName = device;
+            }
+
+          if (sourceName != NULL)
+            {
+              sourceIndex = -1;
+              for (index = 0; sourceName != NULL && index < MIDIGetNumberOfSources(); index++)
                 {
-                  sourceIndex = index;
-                  break;
+                  dest = MIDIGetSource(index);
+                  MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+                  CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+                  if (strcmp(sourceName, name) == 0)
+                    {
+                      sourceIndex = index;
+                      break;
+                    }
                 }
             }
 
-          if (strchr(device, ':') != NULL)
-            destName = strtok(NULL, ":");
-          else
-            destName = sourceName;
-          destIndex = -1;
-          for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
+          if (destName != NULL)
             {
-              dest = MIDIGetDestination(index);
-              MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
-              CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
-              if (strcmp(destName, name) == 0)
+              destIndex = -1;
+              for (index = 0; destName != NULL && index < MIDIGetNumberOfDestinations(); index++)
                 {
-                  destIndex = index;
-                  break;
+                  dest = MIDIGetDestination(index);
+                  MIDIObjectGetStringProperty(dest, kMIDIPropertyDisplayName, &displayName);
+                  CFStringGetCString(displayName, name, 255, kCFStringEncodingASCII);
+                  if (strcmp(destName, name) == 0)
+                    {
+                      destIndex = index;
+                      break;
+                    }
                 }
             }
         }
