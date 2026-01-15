@@ -364,6 +364,11 @@ function main()
     end
 end
 
+function julia_main()::Cint
+  main()
+  return 0 # if things finished successfully
+end
+
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
 end
