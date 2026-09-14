@@ -1,17 +1,14 @@
-module Mplay
+module TUI
 
 using Printf
 
-include("midi.jl")
-include("smf.jl")
 include("console.jl")
 include("dialog.jl")
-include("keys.jl")
 
-using .smf
 using .console
 using .dialog
-using .keys
+
+export run, select_file
 
 const intensities = (
     "        ",
@@ -25,13 +22,11 @@ const intensities = (
     "●●●●●●●●"
 )
 
-include("player.jl")
-
-function __init__()
+function prepare_runtime()
     if Sys.KERNEL == :NT
-        lib= joinpath(@__DIR__, "lib")
-        chmod(joinpath(lib, "libconsole.dll"), 0o755)
-        chmod(joinpath(lib, "libmidi.dll"), 0o755)
+        lib = joinpath(@__DIR__, "lib")
+        console = joinpath(lib, "libconsole.dll")
+        isfile(console) && chmod(console, 0o755)
     end
 end
 
@@ -44,114 +39,72 @@ function showlyrics(smf)
     end
 end
 
-function update(player, smf)
-    outtextxy(1, 1, fileinfo(smf))
-    outtextxy(1, 2, songinfo(smf))
+function update(player, api)
+    smf = player.midi
+    outtextxy(1, 1, api.fileinfo(smf))
+    outtextxy(1, 2, api.songinfo(smf))
     outtextxy(1, 4, "Midi Channel    Name/Family  Instrument   Ch Ins Var Vol Pan Rev Cho Del Sen +/-")
     if player.selection > 0
-        outtextxy([30, 54, 58, 62, 66, 70, 74, 78][player.parameter], 4, ["Instrument", "Vol", "Pan", "Rev", "Cho", "Del", "Sen", "+/-"][player.parameter], 10)
+        outtextxy([30, 54, 58, 62, 66, 70, 74, 78][player.parameter], 4,
+                  ["Instrument", "Vol", "Pan", "Rev", "Cho", "Del", "Sen", "+/-"][player.parameter], 10)
     end
 
     for part in 1:16
-        info = partinfo(smf, part)
+        info = api.partinfo(smf, part)
         if info.used
-            program, variation = getprogram(info.instrument)
+            program, variation = api.getprogram(info.instrument)
             pan = string(info.pan < 64 ? "L" : info.pan > 64 ? "R" : " ", abs(info.pan - 64))
             state = info.muted ? "x" : " "
-            s = @sprintf "%-2d%s%-8s %15s: %-12s %2d %3d %3d %3d %3s %3d %3d %3d %3d %3d" part state intensities[div(info.intensity,15)+1] info.family info.name info.channel program+1 variation info.level pan info.reverb info.chorus info.delay info.sense info.shift-64;
+            s = @sprintf("%-2d%s%-8s %15s: %-12s %2d %3d %3d %3d %3s %3d %3d %3d %3d %3d",
+                part, state, intensities[div(info.intensity, 15) + 1], info.family, info.name, info.channel,
+                program + 1, variation, info.level, pan, info.reverb, info.chorus, info.delay, info.sense,
+                info.shift - 64)
             outtextxy(1, part + 4, s, player.selection == part ? 2 : 0)
         end
     end
 
-    beat = beatinfo(smf) % 4
-    s = rpad(string(repeat(" ", beat*20), repeat("█", 20)), 80)
-    outtextxy(1, 21, s)
+    beat = api.beatinfo(smf) % 4
+    outtextxy(1, 21, rpad(string(repeat(" ", beat * 20), repeat("█", 20)), 80))
     showlyrics(smf)
-    chord, notes = chordinfo(smf)
+    chord, _ = api.chordinfo(smf)
     outtextxy(1, 24, chord)
 end
 
-function mplay(path, device="", opts="")
+function run(player, device, api)
+    prepare_runtime()
     debug = haskey(ENV, "DEBUG")
-
-    player = MidiPlayer(path)
     smf = player.midi
-
-    transpose = false
-    for opt in opts
-        if transpose
-            smf.key_shift = parse(Int, opt)
-            transpose = false
-        elseif opt == "--korg"
-            setkorgmode()
-        elseif opt == "-t"
-            transpose = true
-        elseif match(r"[-][bdg\d]", opt) !== nothing
-            for key in opt[2:end]
-                dispatch(player, key)
-            end
-        else
-            println("unknown option: $opt")
-        end
-    end
-
     raw_mode = false
-    while true
-        delta = play(smf, device)
-        if !raw_mode
-            settty()
-            cls()
-            raw_mode = true
-        end
-        if !debug
-            update(player, smf)
-        end
-        if delta > 0
-            sleep(delta)
-        end
-        if kbhit()
-            key = readchar()
-            if key == Int('\e')
-                allsoundoff(smf)
-                cls();
-                break
-            else
-                dispatch(player, Char(key))
-            end
-        end
-        if smf.at >= smf.atend
-            break
-        end
-    end
-    raw_mode && resettty()
-end
-
-export mplay
-
-function main()
-    if length(ARGS) > 0
-        path = ARGS[1]
-    else
-        path = "."
-    end
-    device = haskey(ENV, "MIDI_DEVICE") ? ENV["MIDI_DEVICE"] : ""
-    if isdir(path)
+    try
         while true
-            (file, opts) = openfiledialog(path)
-            if file == nothing
-                break
+            delta = api.play(smf, device)
+            if !raw_mode
+                settty()
+                cls()
+                raw_mode = true
             end
-            if length(file) > 0
-                mplay(file, device, opts)
+            !debug && update(player, api)
+            delta > 0 && sleep(delta)
+            if kbhit()
+                key = readchar()
+                if key == Int('\e')
+                    api.allsoundoff(smf)
+                    cls()
+                    break
+                else
+                    api.dispatch(player, Char(key))
+                end
             end
+            smf.at >= smf.atend && break
         end
-    else
-        mplay(path, device)
+    finally
+        raw_mode && resettty()
     end
+    return nothing
 end
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    main()
+function select_file(path)
+    return openfiledialog(path)
 end
 
-end #module
+end # module TUI
